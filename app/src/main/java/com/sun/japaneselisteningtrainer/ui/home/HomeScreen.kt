@@ -35,9 +35,9 @@ object HomeDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navigateToAudioEntry: () -> Unit,
     modifier: Modifier = Modifier,
-    homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navigationBar: @Composable () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val homeUiState by homeViewModel.uiState.collectAsState()
@@ -51,18 +51,9 @@ fun HomeScreen(
                 scrollBehavior = scrollBehavior
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = navigateToAudioEntry,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(dimensionResource(id = R.dimen.dp_32))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.audio_entry_title)
-                )
-            }
-        },
+        bottomBar = {
+            navigationBar()
+        }
     ) { innerPadding ->
        Column(
            modifier = Modifier
@@ -80,6 +71,6 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     HomeScreen(
-        navigateToAudioEntry = {}
+        navigationBar = {}
     )
 }

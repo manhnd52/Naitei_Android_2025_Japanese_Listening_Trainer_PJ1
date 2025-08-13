@@ -11,3 +11,4 @@ interface NavigationDestination {
      */
     val titleRes: Int
 }
+

@@ -3,4 +3,6 @@
     <string name="back_button">Back</string>
     <string name="audio_entry_title">Add Audio</string>
     <string name="home_title">Home</string>
+    <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_main2">MainActivity2</string>
 </resources>

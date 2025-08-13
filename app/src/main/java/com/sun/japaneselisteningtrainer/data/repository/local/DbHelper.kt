@@ -22,4 +22,8 @@ class JLTDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, n
         db.execSQL(SQL_DELETE_FOLDER_TABLE)
         onCreate(db)
     }
+
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        onUpgrade(db, oldVersion, newVersion)
+    }
 }
