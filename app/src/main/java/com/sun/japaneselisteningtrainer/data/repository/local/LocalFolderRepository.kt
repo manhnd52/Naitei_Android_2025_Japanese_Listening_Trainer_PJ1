@@ -4,15 +4,17 @@ import android.content.ContentValues
 import android.provider.BaseColumns
 import com.sun.japaneselisteningtrainer.data.folder.FolderRepository
 import com.sun.japaneselisteningtrainer.data.model.Folder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
 
 class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
     private val notifier = DbChangeNotifier()
     private val db = dbHelper.writableDatabase
 
-    override suspend fun add(folder: Folder) {
+    override suspend fun add(folder: Folder) = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {
             put(JLTContract.Folder.COLUMN_NAME, folder.name)
             put(JLTContract.Folder.COLUMN_DESCRIPTION, folder.description)
@@ -22,14 +24,14 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
         notifier.notifyChanged()
     }
 
-    override suspend fun delete(folder: Folder) {
+    override suspend fun delete(folder: Folder) = withContext(Dispatchers.IO) {
         val selection = "${BaseColumns._ID} = ?"
         val selectionArgs = arrayOf(folder.id.toString())
         db.delete(JLTContract.Folder.TABLE_NAME, selection, selectionArgs)
         notifier.notifyChanged()
     }
 
-    override suspend fun update(folder: Folder) {
+    override suspend fun update(folder: Folder) = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {
             put(JLTContract.Folder.COLUMN_NAME, folder.name)
             put(JLTContract.Folder.COLUMN_DESCRIPTION, folder.description)
@@ -51,7 +53,7 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
                     val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
                     val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
                     val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                    val createdAt = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                    val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
                     val folder = Folder(id, name, description, createdAt)
                     folderList.add(folder)
                 } while (cursor.moveToNext())
@@ -81,7 +83,7 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
             if (cursor.moveToFirst()) {
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
                 val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                val createdAt = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
                 return Folder(id, name, description, createdAt)
             }
             cursor.close()
@@ -103,4 +105,7 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
         }
     }
 
+    override fun getFolderStream(title: String): Flow<Folder?> {
+        TODO("Not yet implemented")
+    }
 }

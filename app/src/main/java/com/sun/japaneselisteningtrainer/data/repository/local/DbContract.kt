@@ -39,7 +39,7 @@ object JLTContract {
             "${Audio.COLUMN_IS_SUSPENDED} INTEGER," +
             "${Audio.COLUMN_IS_FAVORITE} INTEGER," +
             "${Audio.COLUMN_LISTEN_TIMES} INTEGER," +
-            "${Audio.COLUMN_CREATED_AT} TEXT," +
+            "${Audio.COLUMN_CREATED_AT} INTEGER," +
             "FOREIGN KEY(${Audio.COLUMN_FOLDER_ID}) REFERENCES ${Folder.TABLE_NAME}(${BaseColumns._ID})" +
             ")"
 
@@ -47,7 +47,7 @@ object JLTContract {
             "${BaseColumns._ID} INTEGER PRIMARY KEY," +
             "${Folder.COLUMN_NAME} TEXT," +
             "${Folder.COLUMN_DESCRIPTION} TEXT," +
-            "${Folder.COLUMN_CREATED_AT} TEXT" +
+            "${Folder.COLUMN_CREATED_AT} INTEGER" +
             ")"
 
     const val SQL_DELETE_AUDIO_TABLE = "DROP TABLE IF EXISTS ${Audio.TABLE_NAME}"

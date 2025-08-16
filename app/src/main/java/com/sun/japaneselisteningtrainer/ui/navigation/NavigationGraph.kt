@@ -16,16 +16,66 @@
 
 package com.sun.japaneselisteningtrainer.ui.navigation
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.sun.japaneselisteningtrainer.ui.folder.FolderListDestination
+import com.sun.japaneselisteningtrainer.ui.folder.FolderListScreen
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryDestination
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryScreen
 import com.sun.japaneselisteningtrainer.ui.home.HomeDestination
 import com.sun.japaneselisteningtrainer.ui.home.HomeScreen
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Add
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.items
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Folder
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Home
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Profile
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Search
+import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
+sealed class NavItem(
+    val icon: ImageVector,
+    val des: NavigationDestination?
+) {
+    object Home : NavItem(Icons.Default.Home, HomeDestination)
+    object Folder : NavItem(Icons.Default.Menu, FolderListDestination)
+    object Add : NavItem(Icons.Default.Add, AudioEntryDestination)
+    object Search : NavItem(Icons.Default.Search, null)
+    object Profile : NavItem(Icons.Default.Person, null)
+
+    companion object {
+        val items by lazy { listOf(Home, Folder, Add, Search, Profile) }
+    }
+}
 
 /**
  * Provides Navigation graph for the application.
@@ -42,8 +92,11 @@ fun TrainerNavHost(
     ) {
         composable(route = HomeDestination.route) {
             HomeScreen(
-                navigateToAudioEntry = {
-                    navController.navigate(AudioEntryDestination.route)
+                navigationBar = {
+                    TrainerNavigationBar(
+                        selectedItem = Home,
+                        navController = navController
+                    )
                 }
             )
         }
@@ -57,5 +110,93 @@ fun TrainerNavHost(
                 }
             )
         }
+        composable(route = FolderListDestination.route) {
+            FolderListScreen(
+                navigateBar = {
+                    TrainerNavigationBar(
+                        selectedItem = Folder,
+                        navController = navController
+                    )
+                }
+            )
+        }
+    }
+}
+
+
+@Composable
+fun TrainerNavigationBar(selectedItem: NavItem, navController: NavHostController) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp,
+        modifier = Modifier.navigationBarsPadding(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (item in items) {
+                Log.d("MyTag", item.toString())
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(4.dp)
+                ) {
+                    TrainerNavigationBarItem(
+                        icon = item.icon,
+                        onClick = {
+                            item.des?.route?.let { navController.navigate(it) }
+                        },
+                        isSelected = when (item) {
+                            Add -> true
+                            selectedItem -> true
+                            else -> false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TrainerNavigationBarItem(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    isSelected: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .background(
+                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = "",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp) // icon to hơn mặc định
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TrainerNavigationBarPreview() {
+    JapaneseListeningTrainerTheme {
+        val navController = rememberNavController()
+        TrainerNavigationBar(
+            selectedItem = NavItem.Home,
+            navController = navController,
+        )
     }
 }

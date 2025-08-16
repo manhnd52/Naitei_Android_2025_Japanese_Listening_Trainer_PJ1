@@ -9,4 +9,5 @@ interface FolderRepository {
     suspend fun update(folder: Folder)
     fun getAllFolderStream(): Flow<List<Folder>>
     fun getFolderStream(id: Int): Flow<Folder?>
+    fun getFolderStream(title: String): Flow<Folder?>
 }

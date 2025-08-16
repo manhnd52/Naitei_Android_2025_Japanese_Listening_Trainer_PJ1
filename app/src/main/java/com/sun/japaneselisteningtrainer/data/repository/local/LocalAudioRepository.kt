@@ -105,7 +105,7 @@ class LocalAudioRepository(private val dbHelper: JLTDbHelper) : AudioRepository 
                     val listenTimes =
                         cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
                     val createdAt =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
+                        cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
                     val audio = Audio(
                         id,
                         title,
@@ -166,7 +166,7 @@ class LocalAudioRepository(private val dbHelper: JLTDbHelper) : AudioRepository 
                 val listenTimes =
                     cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
                 val createdAt =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
                 return Audio(
                     id,
                     title,

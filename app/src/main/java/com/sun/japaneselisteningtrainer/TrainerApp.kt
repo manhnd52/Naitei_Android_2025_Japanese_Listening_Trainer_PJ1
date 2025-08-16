@@ -33,7 +33,8 @@ fun TrainerTopAppBar(
     canNavigateBack: Boolean,
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
-    navigateUp: () -> Unit = {}
+    navigateUp: () -> Unit = {},
+    actions: @Composable () -> Unit = {}
 ) {
     CenterAlignedTopAppBar(
         title = { Text(title) },
@@ -48,6 +49,7 @@ fun TrainerTopAppBar(
                     )
                 }
             }
-        }
+        },
+        actions = { actions() }
     )
 }

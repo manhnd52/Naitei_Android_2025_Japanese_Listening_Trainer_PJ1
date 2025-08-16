@@ -20,11 +20,15 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
+import com.sun.japaneselisteningtrainer.ui.navigation.TrainerNavigationBar
+import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
 
 object HomeDestination : NavigationDestination {
@@ -37,7 +41,7 @@ object HomeDestination : NavigationDestination {
 fun HomeScreen(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigationBar: @Composable () -> Unit
+    navigationBar: @Composable () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val homeUiState by homeViewModel.uiState.collectAsState()
@@ -55,22 +59,22 @@ fun HomeScreen(
             navigationBar()
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            for (audio in homeUiState.audioList) {
-                Text(text = audio.title)
-            }
-        }
+       Column(
+           modifier = Modifier
+               .padding(innerPadding)
+               .fillMaxSize()
+       ) {
+           for (audio in homeUiState.audioList) {
+               Text(text = audio.title)
+           }
+       }
     }
 }
 
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen(
-        navigationBar = TrainerNavi
-    )
+    JapaneseListeningTrainerTheme {
+
+    }
 }
