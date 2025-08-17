@@ -62,6 +62,7 @@ fun CreateFolderDialog(
                     value = uiState.description,
                     onValueChange = { viewModel.updateUiState(description = it) },
                     label = { Text(stringResource(R.string.description)) },
+                    placeholder = { Text(stringResource(R.string.description_placeholder)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

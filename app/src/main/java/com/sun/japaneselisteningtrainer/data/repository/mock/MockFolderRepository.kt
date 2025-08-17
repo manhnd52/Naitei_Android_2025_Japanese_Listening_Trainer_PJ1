@@ -27,8 +27,12 @@ class MockFolderRepository : FolderRepository {
         notifier.notifyChanged()
     }
 
-    override suspend fun delete(folder: Folder): Unit = withContext(Dispatchers.IO) {
-        folderDatabase.remove(folder)
+    override suspend fun delete(folderId: Int): Unit = withContext(Dispatchers.IO) {
+        val folder = folderDatabase.find { it.id == folderId }
+        if (folder != null) {
+            folderDatabase.remove(folder)
+            notifier.notifyChanged()
+        }
     }
 
     override suspend fun update(folder: Folder): Unit = withContext(Dispatchers.IO) {

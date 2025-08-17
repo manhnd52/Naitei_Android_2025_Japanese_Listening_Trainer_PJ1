@@ -11,4 +11,7 @@
     <string name="title">Title</string>
     <string name="folder_title_exists">Folder already exists</string>
     <string name="description">Description</string>
+    <string name="description_placeholder">Optional</string>
+    <string name="folder_deleted">Folder Deleted</string>
+    <string name="undo">Undo</string>
 </resources>

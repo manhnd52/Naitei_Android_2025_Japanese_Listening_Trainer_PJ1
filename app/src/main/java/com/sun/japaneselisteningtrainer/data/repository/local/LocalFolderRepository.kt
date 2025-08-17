@@ -24,9 +24,9 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
         notifier.notifyChanged()
     }
 
-    override suspend fun delete(folder: Folder) = withContext(Dispatchers.IO) {
+    override suspend fun delete(folderId: Int) = withContext(Dispatchers.IO) {
         val selection = "${BaseColumns._ID} = ?"
-        val selectionArgs = arrayOf(folder.id.toString())
+        val selectionArgs = arrayOf(folderId.toString())
         db.delete(JLTContract.Folder.TABLE_NAME, selection, selectionArgs)
         notifier.notifyChanged()
     }

@@ -17,24 +17,53 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Stack
 
 class FolderListViewModel(private val folderRepository: FolderRepository) : ViewModel() {
-    val folderListUiState: StateFlow<FolderListUiState> =
-        folderRepository.getAllFolderStream().map { FolderListUiState(it) }
-            .onEach { state ->
-                Log.d("MyTag", "New FolderListUiState: $state")
+
+
+    var folderListUiState by mutableStateOf(FolderListUiState())
+
+    init {
+        viewModelScope.launch {
+            folderRepository.getAllFolderStream().collect { it ->
+                folderListUiState = folderListUiState.copy(
+                    folderList = it
+                )
             }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
-                initialValue = FolderListUiState()
-            )
+        }
+    }
 
-    var createFolderUiState by mutableStateOf(CreateFolderUiState())
-        private set
+    fun updateUiState(newUiState: FolderListUiState) {
+        folderListUiState = newUiState
+    }
 
+    suspend fun deleteFolder(folderId: Int = folderListUiState.selectedFolder.id) {
+        folderRepository.delete(folderId)
+        Cache.reset()
+    }
 
+    fun openFolderMenu(folder: Folder) {
+        folderListUiState = folderListUiState.copy(showMenu = true, selectedFolder = folder)
+    }
 
+    fun dismissMenu() {
+        folderListUiState = folderListUiState.copy(showMenu = false)
+    }
+
+    fun deleteSelectedFolderFromUi() {
+        Cache.folderListStack.push(folderListUiState.folderList)
+        folderListUiState = folderListUiState.copy(
+            folderList = folderListUiState.folderList.filter { it.id != folderListUiState.selectedFolder.id }
+        )
+    }
+
+    fun restoreFolder() {
+        folderListUiState = folderListUiState.copy(
+            folderList = Cache.folderListStack.pop()
+        )
+        Cache.reset()
+    }
 
     companion object {
         private const val TIMEOUT_MILLIS = 5_000L
@@ -43,6 +72,13 @@ class FolderListViewModel(private val folderRepository: FolderRepository) : View
 
 data class FolderListUiState(
     val folderList: List<Folder> = listOf(),
+    val showMenu: Boolean = false,
+    val selectedFolder: Folder = Folder()
 )
 
-
+object Cache {
+    var folderListStack: Stack<List<Folder>> = Stack()
+    fun reset() {
+        folderListStack.empty()
+    }
+}
