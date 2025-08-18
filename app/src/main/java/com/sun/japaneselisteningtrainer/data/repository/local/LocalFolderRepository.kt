@@ -51,7 +51,7 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
                     val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
                     val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
                     val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                    val createdAt = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                    val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
                     val folder = Folder(id, name, description, createdAt)
                     folderList.add(folder)
                 } while (cursor.moveToNext())
@@ -81,7 +81,7 @@ class LocalFolderRepository(dbHelper: JLTDbHelper) : FolderRepository {
             if (cursor.moveToFirst()) {
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
                 val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                val createdAt = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
                 return Folder(id, name, description, createdAt)
             }
             cursor.close()

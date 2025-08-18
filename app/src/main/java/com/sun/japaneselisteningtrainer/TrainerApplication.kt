@@ -14,4 +14,5 @@ class TrainerApplication : Application() {
         super.onCreate()
         container = AppDataContainer(this)
     }
+
 }

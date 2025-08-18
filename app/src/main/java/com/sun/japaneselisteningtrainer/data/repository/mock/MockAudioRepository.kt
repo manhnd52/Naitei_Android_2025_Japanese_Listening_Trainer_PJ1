@@ -1,5 +1,6 @@
 package com.sun.japaneselisteningtrainer.data.repository.mock
 
+import android.net.Uri
 import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.repository.AudioRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +15,7 @@ class MockAudioRepository : AudioRepository {
         audioDatabase.add(Audio(3, "Không còn anh cạnh bên em, tạm biệt một tương lai tăm tối"))
     }
 
-    override suspend fun add(audio: Audio) : Int{
+    override suspend fun add(audio: Audio, source: Uri) : Int{
         audioDatabase.add(audio)
         return audioDatabase.indexOf(audio)
     }

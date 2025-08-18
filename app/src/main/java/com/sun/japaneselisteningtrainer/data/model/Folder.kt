@@ -4,6 +4,9 @@ data class Folder (
     val id : Int,
     val name: String = "",
     val description: String = "",
-    val createdAt: String = "",
-)
+    val createdAt: Long = 0,
+) {
+    val formatCreatedAt: String
+        get() = formatDateTime(createdAt)
+}
 

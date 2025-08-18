@@ -1,10 +1,12 @@
 package com.sun.japaneselisteningtrainer.data.repository.local
 
 import android.content.ContentValues
+import android.net.Uri
 import android.provider.BaseColumns
 import android.util.Log
 import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.repository.AudioRepository
+import com.sun.japaneselisteningtrainer.data.storage.AudioFileStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -33,21 +35,26 @@ class DbChangeNotifier {
     }
 }
 
-class LocalAudioRepository(private val dbHelper: JLTDbHelper) : AudioRepository {
+class LocalAudioRepository(dbHelper: JLTDbHelper, private val audioFileStorage: AudioFileStorage) : AudioRepository {
     private val db = dbHelper.writableDatabase
     private val notifier = DbChangeNotifier()
 
-    override suspend fun add(audio: Audio) : Int = withContext(Dispatchers.IO) {
+    /**
+     * Add a new audio to the database with the given audio's source.
+     */
+    override suspend fun add(audio: Audio, source: Uri) : Int = withContext(Dispatchers.IO) {
+        val filePath = audioFileStorage.save(source).toString()
+        val savedAudio = audio.copy(filePath = filePath, createdAt = System.currentTimeMillis())
         val values = ContentValues().apply {
-            put(JLTContract.Audio.COLUMN_FOLDER_ID, audio.folderId)
-            put(JLTContract.Audio.COLUMN_TITLE, audio.title)
-            put(JLTContract.Audio.COLUMN_FILE_PATH, audio.filePath)
-            put(JLTContract.Audio.COLUMN_SCRIPT, audio.script)
-            put(JLTContract.Audio.COLUMN_TRANSLATE, audio.translate)
-            put(JLTContract.Audio.COLUMN_IS_SUSPENDED, audio.isSuspended)
-            put(JLTContract.Audio.COLUMN_IS_FAVORITE, audio.isFavorite)
-            put(JLTContract.Audio.COLUMN_LISTEN_TIMES, audio.listenTimes)
-            put(JLTContract.Audio.COLUMN_CREATED_AT, audio.createdAt)
+            put(JLTContract.Audio.COLUMN_FOLDER_ID, savedAudio.folderId)
+            put(JLTContract.Audio.COLUMN_TITLE, savedAudio.title)
+            put(JLTContract.Audio.COLUMN_FILE_PATH, savedAudio.filePath)
+            put(JLTContract.Audio.COLUMN_SCRIPT, savedAudio.script)
+            put(JLTContract.Audio.COLUMN_TRANSLATE, savedAudio.translate)
+            put(JLTContract.Audio.COLUMN_IS_SUSPENDED, savedAudio.isSuspended)
+            put(JLTContract.Audio.COLUMN_IS_FAVORITE, savedAudio.isFavorite)
+            put(JLTContract.Audio.COLUMN_LISTEN_TIMES, savedAudio.listenTimes)
+            put(JLTContract.Audio.COLUMN_CREATED_AT, savedAudio.createdAt)
         }
         val id = db.insert(JLTContract.Audio.TABLE_NAME, null, values)
         notifier.notifyChanged()
@@ -105,7 +112,7 @@ class LocalAudioRepository(private val dbHelper: JLTDbHelper) : AudioRepository 
                     val listenTimes =
                         cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
                     val createdAt =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
+                        cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
                     val audio = Audio(
                         id,
                         title,
@@ -166,7 +173,7 @@ class LocalAudioRepository(private val dbHelper: JLTDbHelper) : AudioRepository 
                 val listenTimes =
                     cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
                 val createdAt =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
                 return Audio(
                     id,
                     title,

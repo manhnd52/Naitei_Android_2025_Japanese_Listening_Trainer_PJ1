@@ -8,6 +8,8 @@ import com.sun.japaneselisteningtrainer.data.repository.local.JLTDbHelper
 import com.sun.japaneselisteningtrainer.data.repository.local.LocalAudioRepository
 import com.sun.japaneselisteningtrainer.data.repository.local.LocalFolderRepository
 import com.sun.japaneselisteningtrainer.data.repository.mock.MockAudioRepository
+import com.sun.japaneselisteningtrainer.data.storage.AudioFileStorage
+import com.sun.japaneselisteningtrainer.data.storage.ExternalAudioFileStorage
 
 
 /**
@@ -22,28 +24,19 @@ interface AppContainer {
  * [AppContainer] implementation that provides instance of mock repository
  */
 class MockAppDataContainer(private val context: Context) : AppContainer {
-    /**
-     * Implementation for [AudioRepository]
-     */
     override val audioRepository: AudioRepository = MockAudioRepository()
-    /**
-     * Implementation for [FolderRepository]
-     */
     override val folderRepository: FolderRepository = MockFolderRepository()
 }
 
 class AppDataContainer(private val context: Context) : AppContainer {
-    val dbHelper = JLTDbHelper(context)
-    /**
-     * Implementation for [AudioRepository]
-     */
+    private val dbHelper = JLTDbHelper(context)
+    private val audioFileStorage: AudioFileStorage = ExternalAudioFileStorage(context)
+
     override val audioRepository: AudioRepository by lazy {
-        LocalAudioRepository(JLTDbHelper(context))
+        LocalAudioRepository(dbHelper, audioFileStorage)
     }
-    /**
-     * Implementation for [FolderRepository]
-     */
+
     override val folderRepository: FolderRepository by lazy {
-        LocalFolderRepository(JLTDbHelper(context))
+        LocalFolderRepository(dbHelper)
     }
 }

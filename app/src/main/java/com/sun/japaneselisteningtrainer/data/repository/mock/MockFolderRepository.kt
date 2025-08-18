@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class MockFolderRepository : FolderRepository {
-    val folderDatabase = mutableListOf<Folder>()
+    private val folderDatabase = mutableListOf<Folder>()
 
     init {
         folderDatabase.add(Folder(1, "Folder 1", "Description for Folder 1"))

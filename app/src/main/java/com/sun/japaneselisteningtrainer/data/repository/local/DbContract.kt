@@ -32,22 +32,22 @@ object JLTContract {
     const val SQL_CREATE_AUDIO_TABLE = "CREATE TABLE ${Audio.TABLE_NAME} (" +
             "${BaseColumns._ID} INTEGER PRIMARY KEY," +
             "${Audio.COLUMN_FOLDER_ID} INTEGER," +
-            "${Audio.COLUMN_TITLE} TEXT," +
+            "${Audio.COLUMN_TITLE} TEXT UNIQUE," +
             "${Audio.COLUMN_FILE_PATH} TEXT," +
             "${Audio.COLUMN_SCRIPT} TEXT," +
             "${Audio.COLUMN_TRANSLATE} TEXT," +
             "${Audio.COLUMN_IS_SUSPENDED} INTEGER," +
             "${Audio.COLUMN_IS_FAVORITE} INTEGER," +
             "${Audio.COLUMN_LISTEN_TIMES} INTEGER," +
-            "${Audio.COLUMN_CREATED_AT} TEXT," +
+            "${Audio.COLUMN_CREATED_AT} LONG," +
             "FOREIGN KEY(${Audio.COLUMN_FOLDER_ID}) REFERENCES ${Folder.TABLE_NAME}(${BaseColumns._ID})" +
             ")"
 
     const val SQL_CREATE_FOLDER_TABLE = "CREATE TABLE ${Folder.TABLE_NAME} (" +
             "${BaseColumns._ID} INTEGER PRIMARY KEY," +
-            "${Folder.COLUMN_NAME} TEXT," +
+            "${Folder.COLUMN_NAME} TEXT UNIQUE," +
             "${Folder.COLUMN_DESCRIPTION} TEXT," +
-            "${Folder.COLUMN_CREATED_AT} TEXT" +
+            "${Folder.COLUMN_CREATED_AT} LONG" +
             ")"
 
     const val SQL_DELETE_AUDIO_TABLE = "DROP TABLE IF EXISTS ${Audio.TABLE_NAME}"

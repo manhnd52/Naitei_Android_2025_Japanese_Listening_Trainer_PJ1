@@ -1,8 +1,5 @@
 package com.sun.japaneselisteningtrainer.ui.navigation
 
-import com.sun.japaneselisteningtrainer.R
-
-
 
 interface NavigationDestination {
     /**

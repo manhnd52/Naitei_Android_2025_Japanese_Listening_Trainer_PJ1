@@ -8,17 +8,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
+import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
+import com.sun.japaneselisteningtrainer.ui.AudioFilePicker
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
-
 import kotlinx.coroutines.launch
 
 object AudioEntryDestination : NavigationDestination {
@@ -31,9 +29,9 @@ object AudioEntryDestination : NavigationDestination {
 fun AudioEntryScreen(
     navigateBack: () -> Unit,
     onNavigationUp: () -> Unit,
-    audioEntryViewModel: AudioEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: AudioEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    var title by audioEntryViewModel.audioTitle
+    val audioForm = viewModel.uiState.audioForm
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
@@ -49,21 +47,32 @@ fun AudioEntryScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             TextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Input A New Audio") }
+                value = audioForm.title,
+                onValueChange = { viewModel.updateForm(audioForm.copy(title = it)) },
+                label = { Text(stringResource(R.string.title)) }
             )
+            TextField(
+                value = audioForm.script,
+                onValueChange = { viewModel.updateForm(audioForm.copy(script = it)) },
+                label = { Text(stringResource(R.string.script)) }
+            )
+
+            AudioFilePicker(
+                onFileSelected = { viewModel.updateForm(audioForm.copy(selectedFileUri = it)) },
+            )
+
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        audioEntryViewModel.addAudio()
+                        viewModel.addAudio()
                         navigateBack()
                     }
-
-                }
+                },
+                enabled = viewModel.uiState.isValid
             ) {
-                Text("Add Audio")
+                Text(stringResource(R.string.add_audio))
             }
+
         }
     }
 }
