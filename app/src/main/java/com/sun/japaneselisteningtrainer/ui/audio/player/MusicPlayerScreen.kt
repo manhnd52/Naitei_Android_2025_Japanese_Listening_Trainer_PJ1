@@ -5,13 +5,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -19,7 +16,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sun.japaneselisteningtrainer.R
+import com.sun.japaneselisteningtrainer.TrainerApplication
 import com.sun.japaneselisteningtrainer.data.model.Audio
+import com.sun.japaneselisteningtrainer.service.AudioServiceManager
+import com.sun.japaneselisteningtrainer.service.AudioServiceManagerSingleton
+import kotlinx.coroutines.launch
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.AudioProgressBar
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.EditAudioButton
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.LyricsBox
@@ -42,9 +43,65 @@ object MusicPlayerDestination : NavigationDestination {
 @Composable
 fun MusicPlayerScreen(
     modifier: Modifier = Modifier,
+    audioId: Int = 1, // ID của audio cần phát
     onNavigationBack: () -> Unit,
     onEditAudio: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    // Get AudioServiceManager instance với repository
+    val audioServiceManager = remember {
+        AudioServiceManagerSingleton.getInstance(context)
+    }
+    
+    // Observe service states
+    val isServiceConnected by audioServiceManager.isServiceConnected.collectAsState()
+    val isPlaying by audioServiceManager.isPlaying.collectAsState()
+    val currentPosition by audioServiceManager.currentPosition.collectAsState()
+    val duration by audioServiceManager.duration.collectAsState()
+    val currentAudio by audioServiceManager.currentAudio.collectAsState()
+    
+    // Loading state cho audio data
+    var isLoadingAudio by remember { mutableStateOf(true) }
+    var audioLoadError by remember { mutableStateOf<String?>(null) }
+    
+    // Bind to service when screen opens
+    LaunchedEffect(Unit) {
+        audioServiceManager.bindToService()
+    }
+    
+    // Load audio from database when audioId changes
+    LaunchedEffect(audioId, isServiceConnected) {
+        if (isServiceConnected) {
+            isLoadingAudio = true
+            audioLoadError = null
+            
+            try {
+                audioServiceManager.loadAndPlayAudio(audioId)
+                isLoadingAudio = false
+            } catch (e: Exception) {
+                audioLoadError = "Không thể load audio: ${e.message}"
+                isLoadingAudio = false
+            }
+        }
+    }
+    
+    // Increment listen times khi bắt đầu phát
+    LaunchedEffect(isPlaying, currentAudio) {
+        val audio = currentAudio
+        if (isPlaying && audio != null) {
+            // Chỉ increment một lần khi bắt đầu phát
+            audioServiceManager.incrementListenTimes(audio)
+        }
+    }
+    
+    // Cleanup when screen closes
+    DisposableEffect(Unit) {
+        onDispose {
+            audioServiceManager.unbindFromService()
+        }
+    }
     Scaffold(
         topBar = {
             TrainerTopAppBar(
@@ -58,19 +115,84 @@ fun MusicPlayerScreen(
         }
     ) { inner ->
         // Container nhận swipe để toggle transcript
-        PlayerContainer(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner),
-            audio = Audio(1, "日本語"),
-        )
+        if (isLoadingAudio) {
+            // Loading state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text("Đang tải audio...")
+                }
+            }
+        } else if (audioLoadError != null) {
+            // Error state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = audioLoadError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                audioServiceManager.loadAndPlayAudio(audioId)
+                            }
+                        }
+                    ) {
+                        Text("Thử lại")
+                    }
+                }
+            }
+        } else {
+            // Success state với real data - sử dụng currentAudio nếu có
+            val audio = currentAudio
+            if (audio != null) {
+                PlayerContainer(
+                    audioServiceManager = audioServiceManager,
+                    isPlaying = isPlaying,
+                    currentPosition = currentPosition,
+                    duration = duration,
+                    currentAudio = audio,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(inner)
+                )
+            } else {
+                // No audio found state
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Không tìm thấy audio với ID: $audioId",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun PlayerContainer(
-    modifier: Modifier = Modifier,
-    audio: Audio
+    audioServiceManager: AudioServiceManager,
+    isPlaying: Boolean,
+    currentPosition: Long,
+    duration: Long,
+    currentAudio: Audio,
+    modifier: Modifier = Modifier
 ) {
     var isTranscriptVisible by remember { mutableStateOf(false) }
     TranscriptContainer(
@@ -96,19 +218,26 @@ fun PlayerContainer(
                     modifier = Modifier
                         .padding(30.dp, 0.dp, 30.dp, 30.dp)
                         .fillMaxWidth(),
-                    isPlaying = true
+                    isPlaying = isPlaying
                 )
             } else {
                 LyricView(
-                    audio = Audio(1, "日本語"),
+                    audio = currentAudio,
                     modifier = Modifier.weight(1f)
                 )
             }
             AudioTitle(
                 modifier = Modifier.padding(vertical = dimensionResource(R.dimen.dp_8)),
-                title = "日本語"
+                title = currentAudio.title
             )
-            AudioController(modifier = Modifier)
+            AudioController(
+                audioServiceManager = audioServiceManager,
+                isPlaying = isPlaying,
+                currentPosition = currentPosition,
+                duration = duration,
+                currentAudio = currentAudio,
+                modifier = Modifier
+            )
         }
     }
 }
@@ -146,28 +275,45 @@ fun AudioTitle(
 }
 
 @Composable
-fun AudioController(modifier: Modifier = Modifier) {
+fun AudioController(
+    audioServiceManager: AudioServiceManager,
+    isPlaying: Boolean,
+    currentPosition: Long,
+    duration: Long,
+    currentAudio: Audio,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
     ) {
         AudioProgressBar(
-            progress = 0.1f,
-            currentPosition = 10000,
-            duration = 200000,
-            onSeek = { /* TODO: call onSeek */},
+            progress = audioServiceManager.getProgress(),
+            currentPosition = currentPosition,
+            duration = duration,
+            onSeek = { progress ->
+                val newPosition = (duration * progress).toLong()
+                audioServiceManager.seekTo(newPosition)
+            },
             onSeekFinished = { },
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         Spacer(Modifier.height(8.dp))
         TransportBar(
-            isPlaying = true,
-            isShuffleOn = true,
-            isFavorite = true,
-            onToggleShuffle = { },
-            onPrevious = { },
-            onPlayPause = { },
-            onNext = { },
-            onToggleFavorite = { }
+            isPlaying = isPlaying,
+            isShuffleOn = audioServiceManager.isShuffleEnabled(),
+            isFavorite = currentAudio.isFavorite,
+            onToggleShuffle = { audioServiceManager.toggleShuffle() },
+            onPrevious = { audioServiceManager.previousTrack() },
+            onPlayPause = { audioServiceManager.togglePlayPause() },
+            onNext = { audioServiceManager.nextTrack() },
+            onToggleFavorite = { 
+                // Toggle favorite trong database
+                currentAudio?.let { audio ->
+                    scope.launch {
+                        audioServiceManager.toggleFavoriteStatus(audio)
+                    }
+                }
+            }
         )
     }
 }
@@ -177,11 +323,20 @@ fun LyricView(
     modifier: Modifier = Modifier,
     audio: Audio
 ) {
+    // Split script thành lines
+    val scriptLines = remember(audio.script) {
+        audio.script.split("\n").filter { it.isNotBlank() }
+    }
+    
     LyricsBox(
-        lines = listOf("Ahayo", "Arigatougozaimasu"),
-        currentLineIndex = 0,
-        currentLineProgress = 1.0f,
-        onSeekToLine = { /* map line -> time tại VM rồi call onSeek */ },
+        lines = scriptLines,
+        currentLineIndex = 0, // TODO: Track current line based on playback position
+        currentLineProgress = 0f, // TODO: Calculate line progress
+        onSeekToLine = { lineIndex -> 
+            // TODO: Map line index to time position và seek
+            // Tạm thời seek về đầu
+            // audioServiceManager.seekTo(0L)
+        },
         modifier = modifier
     )
 }
@@ -191,6 +346,7 @@ fun LyricView(
 private fun AudioPlayerPreview() {
     JapaneseListeningTrainerTheme {
         MusicPlayerScreen(
+            audioId = 1,
             onEditAudio = {},
             modifier = Modifier,
             onNavigationBack = { },
