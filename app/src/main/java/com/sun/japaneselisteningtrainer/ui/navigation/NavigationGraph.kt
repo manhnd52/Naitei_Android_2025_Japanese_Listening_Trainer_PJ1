@@ -16,6 +16,7 @@
 
 package com.sun.japaneselisteningtrainer.ui.navigation
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,10 +38,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,20 +45,35 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryDestination
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryScreen
-import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerScreen
-import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerDestination
+import com.sun.japaneselisteningtrainer.ui.folder.FolderListDestination
+import com.sun.japaneselisteningtrainer.ui.folder.FolderListScreen
 import com.sun.japaneselisteningtrainer.ui.home.HomeDestination
 import com.sun.japaneselisteningtrainer.ui.home.HomeScreen
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Add
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.items
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Folder
+import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Home
 import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
+sealed class NavItem(
+    val icon: ImageVector,
+    val des: NavigationDestination?
+) {
+    object Home : NavItem(Icons.Default.Home, HomeDestination)
+    object Folder : NavItem(Icons.Default.Menu, FolderListDestination)
+    object Add : NavItem(Icons.Default.Add, AudioEntryDestination)
+    object Search : NavItem(Icons.Default.Search, null)
+    object Profile : NavItem(Icons.Default.Person, null)
+
+    companion object {
+        val items by lazy { listOf(Home, Folder, Add, Search, Profile) }
+    }
+}
 
 /**
  * Provides Navigation graph for the application.
@@ -78,7 +90,12 @@ fun TrainerNavHost(
     ) {
         composable(route = HomeDestination.route) {
             HomeScreen(
-                navigationBar = { TrainerNavigationBar(navController = navController) }
+                navigationBar = {
+                    TrainerNavigationBar(
+                        selectedItem = Home,
+                        navController = navController
+                    )
+                }
             )
         }
         composable(route = AudioEntryDestination.route) {
@@ -91,41 +108,22 @@ fun TrainerNavHost(
                 }
             )
         }
-        composable(
-            route = MusicPlayerDestination.routeWithArgs,
-            arguments = listOf(navArgument(MusicPlayerDestination.audioIdArg) {
-                type = NavType.IntType
-            })
-        ){
-            MusicPlayerScreen(
-                modifier = Modifier,
-                onNavigationBack = { navController.navigateUp() },
-                onEditAudio = { navController.navigate(AudioEntryDestination.route) }
+        composable(route = FolderListDestination.route) {
+            FolderListScreen(
+                navigateBar = {
+                    TrainerNavigationBar(
+                        selectedItem = Folder,
+                        navController = navController
+                    )
+                }
             )
         }
     }
 }
 
-sealed class NavItem(
-    val label: String,
-    val icon: ImageVector,
-    val des: NavigationDestination?
-) {
-    object Home : NavItem("Home", Icons.Default.Home, HomeDestination)
-    object Folder : NavItem("Folder", Icons.Default.Menu, null)
-    object Add : NavItem("Add", Icons.Default.Add, AudioEntryDestination)
-    object Search : NavItem("Search", Icons.Default.Search, null)
-    object Profile : NavItem("Profile", Icons.Default.Person, null)
-
-    companion object {
-        val items = listOf(Home, Folder, Add, Search, Profile)
-    }
-}
 
 @Composable
-fun TrainerNavigationBar(navController: NavHostController) {
-
-    var selectedItem by remember { mutableStateOf(items[0]) }
+fun TrainerNavigationBar(selectedItem: NavItem, navController: NavHostController) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
@@ -147,11 +145,10 @@ fun TrainerNavigationBar(navController: NavHostController) {
                     TrainerNavigationBarItem(
                         icon = item.icon,
                         onClick = {
-                            selectedItem = item;
                             item.des?.route?.let { navController.navigate(it) }
                         },
-                        isSelected = when(item) {
-                            NavItem.Add -> true
+                        isSelected = when (item) {
+                            Add -> true
                             selectedItem -> true
                             else -> false
                         }
@@ -192,8 +189,11 @@ fun TrainerNavigationBarItem(
 @Preview
 @Composable
 fun TrainerNavigationBarPreview() {
-    JapaneseListeningTrainerTheme{
+    JapaneseListeningTrainerTheme {
         val navController = rememberNavController()
-        TrainerNavigationBar(navController = navController)
+        TrainerNavigationBar(
+            selectedItem = NavItem.Home,
+            navController = navController,
+        )
     }
 }

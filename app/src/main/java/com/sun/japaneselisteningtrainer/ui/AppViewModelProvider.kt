@@ -18,13 +18,16 @@ package com.sun.japaneselisteningtrainer.ui
 
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.sun.japaneselisteningtrainer.ui.home.HomeViewModel
 import com.sun.japaneselisteningtrainer.TrainerApplication
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryViewModel
+import com.sun.japaneselisteningtrainer.ui.folder.FolderListViewModel
+import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.FolderFormViewModel
+import com.sun.japaneselisteningtrainer.ui.folder.create.CreateFolderViewModel
+import com.sun.japaneselisteningtrainer.ui.folder.edit.EditFolderViewModel
+import com.sun.japaneselisteningtrainer.ui.home.HomeViewModel
 
 /**
  * Provides Factory to create instance of ViewModel for the entire Japanese Listening Trainer app
@@ -42,6 +45,32 @@ object AppViewModelProvider {
         initializer {
             AudioEntryViewModel(
                 trainerApplication().container.audioRepository
+            )
+        }
+
+        // Initializer for [FolderListViewModel]
+        initializer {
+            FolderListViewModel(
+                trainerApplication().container.folderRepository
+            )
+        }
+
+        // Initializer for [CreateFolderViewModel]
+        initializer {
+            CreateFolderViewModel(
+                folderRepository = trainerApplication().container.folderRepository
+            )
+        }
+
+        initializer {
+            FolderFormViewModel(
+                folderRepository = trainerApplication().container.folderRepository
+            )
+        }
+
+        initializer {
+            EditFolderViewModel(
+                folderRepository = trainerApplication().container.folderRepository
             )
         }
     }
