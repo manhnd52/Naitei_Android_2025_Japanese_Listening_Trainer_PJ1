@@ -1,6 +1,7 @@
 package com.sun.japaneselisteningtrainer.ui.folder
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,6 +30,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,6 +59,7 @@ import com.sun.japaneselisteningtrainer.ui.components.MenuItem
 import com.sun.japaneselisteningtrainer.ui.folder.create.CreateFolderDialog
 import com.sun.japaneselisteningtrainer.ui.folder.edit.EditFolderDialog
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
+import com.sun.japaneselisteningtrainer.ui.navigation.TrainerNavigationBarPreview
 import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 import kotlinx.coroutines.launch
 
@@ -99,7 +104,8 @@ fun FolderListScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { it ->
-        LazyColumn(contentPadding = it) {
+        if (uiState.folderList.isEmpty()) EmptyFolderScreen(modifier = Modifier.padding(it))
+        else LazyColumn(contentPadding = it) {
             items(uiState.folderList, key = { it.id }) {
                 FolderItem(
                     folder = it,
@@ -168,6 +174,27 @@ fun FolderListScreen(
 }
 
 @Composable
+fun EmptyFolderScreen(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(R.drawable.mint_green_folder_with_blossom),
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth(0.5f)
+        )
+        Text(
+            text = "Your folder list is empty now",
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@Composable
 fun FolderMenuDialog(
     modifier: Modifier = Modifier,
     onEdit: () -> Unit,
@@ -210,10 +237,12 @@ fun FolderItem(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.clip(MaterialTheme.shapes.medium).combinedClickable(
-            onLongClick = onLongClick,
-            onClick = onClick,
-        ),
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .combinedClickable(
+                onLongClick = onLongClick,
+                onClick = onClick,
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -253,15 +282,9 @@ fun FolderItem(
 
 @Preview
 @Composable
-fun FolderItemPreview() {
+fun FolderScreenPreview() {
     val folder = Folder(1, "Folder 1", "Super long description")
-    JapaneseListeningTrainerTheme {
-        FolderItem(
-            folder = folder,
-            onClick = { },
-            onLongClick = { },
-        )
-    }
+
 }
 
 
