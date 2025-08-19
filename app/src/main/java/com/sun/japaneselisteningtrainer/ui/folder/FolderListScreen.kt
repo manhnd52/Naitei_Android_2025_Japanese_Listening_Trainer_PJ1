@@ -124,7 +124,7 @@ fun FolderListScreen(
                     createFolderRequired = false
                     scope.launch {
                         snackBarHostState.showTrainerSnackbar(
-                            message = "Folder Created"
+                            message = context.getString(R.string.folder_created)
                         )
                     }
                 },
@@ -162,7 +162,7 @@ fun FolderListScreen(
                     viewModel.dismissEditForm()
                     scope.launch {
                         snackBarHostState.showTrainerSnackbar(
-                            message = "Folder Edited"
+                            message = context.getString(R.string.folder_edited)
                         )
                     }
                 },
@@ -187,7 +187,7 @@ fun EmptyFolderScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(0.5f)
         )
         Text(
-            text = "Your folder list is empty now",
+            text = stringResource(R.string.folder_list_empty_message),
             style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -203,11 +203,11 @@ fun FolderMenuDialog(
 ) {
     val menuItems = listOf(
         MenuItem(
-            title = "Edit",
+            title = stringResource(R.string.edit),
             onClick = onEdit
         ),
         MenuItem(
-            title = "Delete",
+            title = stringResource(R.string.delete),
             onClick = onDelete
         )
     )

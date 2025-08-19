@@ -90,7 +90,7 @@ fun FolderInputForm(
             onValueChange = { onValueChange(uiState.copy(description = it)) },
             label = {
                 if (isDescriptionOverLimit) {
-                    Text("Max: $DESCRIPTION_MAX_LENGTH chars")
+                    Text(stringResource(R.string.max_chars, DESCRIPTION_MAX_LENGTH))
                 } else Text (stringResource(R.string.description))
             },
             placeholder = { Text(stringResource(R.string.description_placeholder)) },

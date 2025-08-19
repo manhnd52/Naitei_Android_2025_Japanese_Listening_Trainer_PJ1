@@ -31,7 +31,7 @@ class FolderListViewModel(private val folderRepository: FolderRepository) : View
 
     suspend fun deleteFolder(folderId: Int = folderListUiState.selectedFolder.id) {
         folderRepository.delete(folderId)
-        Cache.reset()
+        DeletedCache.pop()
     }
 
     fun openFolderMenu(folder: Folder) {
@@ -43,7 +43,7 @@ class FolderListViewModel(private val folderRepository: FolderRepository) : View
     }
 
     fun deleteSelectedFolderFromUi() {
-        Cache.folderListStack.push(folderListUiState.folderList)
+        DeletedCache.push(folderListUiState.folderList)
         folderListUiState = folderListUiState.copy(
             folderList = folderListUiState.folderList.filter { it.id != folderListUiState.selectedFolder.id }
         )
@@ -51,9 +51,8 @@ class FolderListViewModel(private val folderRepository: FolderRepository) : View
 
     fun restoreFolder() {
         folderListUiState = folderListUiState.copy(
-            folderList = Cache.folderListStack.pop()
+            folderList = DeletedCache.pop()
         )
-        Cache.reset()
     }
 
     fun showEditForm() {
@@ -76,9 +75,18 @@ data class FolderListUiState(
     val showEditForm: Boolean = false
 )
 
-object Cache {
-    var folderListStack: Stack<List<Folder>> = Stack()
+private object DeletedCache {
+    private var folderListStack: Stack<List<Folder>> = Stack()
+
+    fun push(folderList: List<Folder>) {
+        folderListStack.push(folderList)
+    }
+
+    fun pop(): List<Folder> {
+        return folderListStack.pop()
+    }
+
     fun reset() {
-        folderListStack.empty()
+        folderListStack.clear()
     }
 }

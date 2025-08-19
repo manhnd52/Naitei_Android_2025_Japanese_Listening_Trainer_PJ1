@@ -12,6 +12,7 @@ import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.Fo
 import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.toFolder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.nio.file.Files.exists
 
 class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel() {
     var uiState by mutableStateOf(FolderFormUiState())
@@ -19,6 +20,7 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
     fun updateUiState(newUiState: FolderFormUiState) {
         viewModelScope.launch {
             uiState = newUiState.copy(
+                title = newUiState.title,
                 isEntryValid = validateInput(newUiState),
                 isTitleError = isTitleError(newUiState.title)
             )
@@ -35,6 +37,8 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
         }
     }
 
+
+
     private suspend fun FolderFormUiState.validateTitleInput(): Boolean {
         val title = this.title
         val des = this.description
@@ -47,17 +51,23 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
         }
     }
 
-    private suspend fun String.exists() = (folderRepository.getFolderStream(this).first() != null)
+    private suspend fun String.exists() = (folderRepository.getFolderStream(this.trim()).first() != null)
 
-    private suspend fun isTitleError(title: String): Boolean =
-        title.isBlank() || title.exists()
+    private suspend fun isTitleError(title: String): Boolean = title.exists()
 
     fun createFolder(folder: Folder = uiState.toFolder()) {
         viewModelScope.launch {
-            folderRepository.add(folder)
+            val formattedFolder = folder.format()
+            folderRepository.add(formattedFolder)
         }
     }
 
+    private fun Folder.format() : Folder {
+        return this.copy(
+            name = this.name.trim(),
+            description = this.description.trim()
+        )
+    }
 }
 
 

@@ -30,7 +30,7 @@ fun EditFolderDialog(
     }
 
     FolderFormDialog(
-        title = stringResource(R.string.create_folder_title),
+        title = stringResource(R.string.edit_folder_title),
         uiState = viewModel.uiState,
         onValueChange = viewModel::updateUiState,
         onCancel = onCancel,

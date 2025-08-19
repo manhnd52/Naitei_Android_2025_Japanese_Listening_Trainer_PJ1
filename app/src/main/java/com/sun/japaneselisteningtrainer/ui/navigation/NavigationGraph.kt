@@ -137,7 +137,6 @@ fun TrainerNavigationBar(selectedItem: NavItem, navController: NavHostController
             verticalAlignment = Alignment.CenterVertically
         ) {
             for (item in items) {
-                Log.d("MyTag", item.toString())
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
