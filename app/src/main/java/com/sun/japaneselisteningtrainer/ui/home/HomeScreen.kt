@@ -59,8 +59,6 @@ fun HomeScreen(
     navigationBar: @Composable () -> Unit
 ) {
     val homeUiState by homeViewModel.uiState.collectAsState()
-    var openDialog by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -96,38 +94,20 @@ fun HomeScreen(
             }
         }
     ) { paddingValues ->
-        Column(modifier = modifier.padding(paddingValues)) {
-            Button(
-                onClick = { openDialog = true }
-            ) {
-                Text("Open Folder Picker")
+        LazyColumn(
+            contentPadding = paddingValues,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize()
+        ) {
+            items(homeUiState.audioList) { audio ->
+                AudioCard(
+                    title = audio.title,
+                    imageRes = R.drawable.logo,
+                    onClick = { homeViewModel.playAudio(audio) }
+                )
             }
-            Text("Selected Folder: $selectedFolder")
-            LazyColumn(
-                contentPadding = paddingValues,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxSize()
-            ) {
-                items(homeUiState.audioList) { audio ->
-                    AudioCard(
-                        title = audio.title,
-                        imageRes = R.drawable.logo,
-                        onClick = { homeViewModel.playAudio(audio) }
-                    )
-                }
-            }
-        }
-
-        if (openDialog) {
-            FolderPicker(
-                onFolderSelected = {
-                    selectedFolder = it.name
-                    openDialog = false
-                },
-                onDismiss = { openDialog = false }
-            )
         }
     }
 }

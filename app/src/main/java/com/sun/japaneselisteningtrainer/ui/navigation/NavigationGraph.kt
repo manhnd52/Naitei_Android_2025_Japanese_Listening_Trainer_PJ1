@@ -38,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -74,6 +75,7 @@ sealed class NavItem(
         val items by lazy { listOf(Home, Folder, Add, Search, Profile) }
     }
 }
+
 
 /**
  * Provides Navigation graph for the application.

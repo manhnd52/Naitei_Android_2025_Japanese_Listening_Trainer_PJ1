@@ -1,5 +1,8 @@
 package com.sun.japaneselisteningtrainer.ui.folder.components
 
+import android.app.ProgressDialog.show
+import android.view.Gravity
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,12 +61,23 @@ fun FolderPicker(
     onDismiss: () -> Unit,
 ) {
     val uiState = viewModel.uiState
+    val context = LocalContext.current
     when {
         uiState.showAddDialog -> CreateFolderDialog(
-            onCreateConfirm = { viewModel.dismissCreateDialog() },
+            onCreateConfirm = {
+                viewModel.dismissCreateDialog()
+                val toast = Toast.makeText(
+                    context,
+                    context.getString(R.string.folder_created),
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
             onCancel = { viewModel.dismissCreateDialog() },
         )
+
         else -> FolderPickerDialog(
+            modifier = modifier,
+            title = title,
             folderList = uiState.folderList,
             onFolderSelected = onFolderSelected,
             onDismiss = onDismiss,
@@ -71,12 +86,12 @@ fun FolderPicker(
     }
 }
 
-//TODO: Cải thiện search cho folder thay vì getAllFolderStream()
+//TODO: Optimize folder search folder instead of using getAllFolderStream()
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderPickerDialog(
     modifier: Modifier = Modifier,
-    title: String = stringResource(R.string.select_folder),
+    title: String,
     folderList: List<Folder>,
     onFolderSelected: (Folder) -> Unit,
     onDismiss: () -> Unit,
@@ -96,7 +111,7 @@ fun FolderPickerDialog(
             }
         },
         text = {
-            Column() {
+            Column {
                 FolderSearchField(query = query, onQueryChange = { query = it })
                 Spacer(modifier = Modifier.height(8.dp))
                 FolderList(
@@ -215,6 +230,7 @@ fun AddFolderButton(
         )
     }
 }
+
 @Preview
 @Composable
 fun FolderTextButtonPreview() {
@@ -231,6 +247,7 @@ fun FolderTextButtonPreview() {
 fun FolderPickerPreview() {
     JapaneseListeningTrainerTheme {
         FolderPickerDialog(
+            title = "Select Folder",
             folderList = listOf(
                 Folder(1, "Test Folder", "Test Description"),
                 Folder(2, "Test Folder 2", "Test Description 2"),
@@ -252,6 +269,7 @@ fun FolderPickerPreview() {
 
 class FolderPickerViewModel(private val folderRepository: FolderRepository) : ViewModel() {
     var uiState by mutableStateOf(FolderPickerUiState())
+
     init {
         viewModelScope.launch {
             folderRepository.getAllFolderStream().collect { it ->
@@ -272,6 +290,6 @@ class FolderPickerViewModel(private val folderRepository: FolderRepository) : Vi
 }
 
 data class FolderPickerUiState(
-    val folderList: List<Folder> = listOf<Folder>(),
+    val folderList: List<Folder> = listOf(),
     val showAddDialog: Boolean = false
 )
