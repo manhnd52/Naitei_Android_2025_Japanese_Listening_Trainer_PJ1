@@ -1,4 +1,4 @@
-package com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog
+package com.sun.japaneselisteningtrainer.ui.folder.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sun.japaneselisteningtrainer.R
+import com.sun.japaneselisteningtrainer.data.model.Folder
 
-const val DESCRIPTION_MAX_LENGTH = 30
+const val DESCRIPTION_MAX_LENGTH = 100
+const val TITLE_MAX_LENGTH = 30
 
 /**
  * Selected used to populate the form when editing a folder.
@@ -66,22 +68,26 @@ fun FolderInputForm(
     onValueChange: (FolderFormUiState) -> Unit,
 ) {
     val isDescriptionOverLimit = uiState.description.length > DESCRIPTION_MAX_LENGTH
+    val isTitleOverLimit = uiState.title.length > TITLE_MAX_LENGTH
+    val isTitleFieldError = uiState.doesTitleExist || isTitleOverLimit
     Column {
         OutlinedTextField(
             value = uiState.title,
             onValueChange = { onValueChange(uiState.copy(title = it)) },
             label = {
-                if (uiState.isTitleError) {
-                    Text(
-                        text = stringResource(R.string.folder_title_exists),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                } else {
-                    Text(stringResource(R.string.title))
+                when {
+                    isTitleOverLimit -> {
+                        Text(stringResource(R.string.max_chars, TITLE_MAX_LENGTH))
+                    }
+                    uiState.doesTitleExist -> {
+                        Text(stringResource(R.string.folder_title_exists))
+                    }
+                    else -> Text(stringResource(R.string.title))
+
                 }
             },
             singleLine = true,
-            isError = uiState.isTitleError,
+            isError = isTitleFieldError,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -99,3 +105,22 @@ fun FolderInputForm(
         )
     }
 }
+
+data class FolderFormUiState(
+    val title: String = "",
+    val description: String = "",
+    val isEntryValid: Boolean = false,
+    val doesTitleExist: Boolean = false
+)
+
+fun FolderFormUiState.toFolder(): Folder = Folder(
+    name = title,
+    description = description
+)
+
+fun Folder.toFolderFormUiState(): FolderFormUiState = FolderFormUiState(
+    title = name,
+    description = description,
+    isEntryValid = false,
+    doesTitleExist = false
+)

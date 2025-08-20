@@ -7,12 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sun.japaneselisteningtrainer.data.folder.FolderRepository
 import com.sun.japaneselisteningtrainer.data.model.Folder
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.DESCRIPTION_MAX_LENGTH
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.FolderFormUiState
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.toFolder
+import com.sun.japaneselisteningtrainer.ui.folder.components.DESCRIPTION_MAX_LENGTH
+import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormUiState
+import com.sun.japaneselisteningtrainer.ui.folder.components.TITLE_MAX_LENGTH
+import com.sun.japaneselisteningtrainer.ui.folder.components.toFolder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.nio.file.Files.exists
 
 class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel() {
     var uiState by mutableStateOf(FolderFormUiState())
@@ -22,7 +22,7 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
             uiState = newUiState.copy(
                 title = newUiState.title,
                 isEntryValid = validateInput(newUiState),
-                isTitleError = isTitleError(newUiState.title)
+                doesTitleExist = doesTittleExist(newUiState.title)
             )
         }
     }
@@ -32,28 +32,22 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
     }
 
     private suspend fun validateInput(uiState: FolderFormUiState): Boolean {
-        return with(uiState) {
-            this.validateTitleInput()
-        }
-    }
-
-
-
-    private suspend fun FolderFormUiState.validateTitleInput(): Boolean {
-        val title = this.title
-        val des = this.description
-
+        val title = uiState.title
+        val des = uiState.description
         return when {
             title.isBlank() -> false
+            title.length > TITLE_MAX_LENGTH -> false
             des.length > DESCRIPTION_MAX_LENGTH -> false
             title.exists() -> false
             else -> true
         }
     }
 
-    private suspend fun String.exists() = (folderRepository.getFolderStream(this.trim()).first() != null)
+    private suspend fun String.exists() =
+        (folderRepository.getFolderStream(this.trim()).first() != null)
 
-    private suspend fun isTitleError(title: String): Boolean = title.exists()
+    private suspend fun doesTittleExist(title: String): Boolean = title.exists()
+            && title.length > TITLE_MAX_LENGTH
 
     fun createFolder(folder: Folder = uiState.toFolder()) {
         viewModelScope.launch {
@@ -62,7 +56,7 @@ class CreateFolderViewModel(val folderRepository: FolderRepository) : ViewModel(
         }
     }
 
-    private fun Folder.format() : Folder {
+    private fun Folder.format(): Folder {
         return this.copy(
             name = this.name.trim(),
             description = this.description.trim()

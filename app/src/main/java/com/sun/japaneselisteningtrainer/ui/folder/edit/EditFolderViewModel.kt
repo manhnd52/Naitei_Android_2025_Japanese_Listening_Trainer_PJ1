@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sun.japaneselisteningtrainer.data.folder.FolderRepository
 import com.sun.japaneselisteningtrainer.data.model.Folder
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.DESCRIPTION_MAX_LENGTH
+import com.sun.japaneselisteningtrainer.ui.folder.components.DESCRIPTION_MAX_LENGTH
 import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.FolderFormUiState
 import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.toFolderFormUiState
 import kotlinx.coroutines.flow.first
@@ -26,7 +26,7 @@ class EditFolderViewModel(val folderRepository: FolderRepository) : ViewModel() 
         viewModelScope.launch {
             uiState = newUiState.copy(
                 isEntryValid = validateInput(newUiState),
-                isTitleError = isTitleError(newUiState.title)
+                doesTitleExist = isTitleError(newUiState.title)
             )
         }
     }

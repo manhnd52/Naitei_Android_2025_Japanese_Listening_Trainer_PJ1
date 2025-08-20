@@ -9,9 +9,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.data.model.Folder
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog.FolderFormDialog
+import com.sun.japaneselisteningtrainer.ui.folder.components.FolderFormDialog
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 @Composable
 fun EditFolderDialog(

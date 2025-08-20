@@ -261,10 +261,17 @@ fun FolderItem(
                     text = folder.name,
                     style = MaterialTheme.typography.displaySmall,
                 )
-                Text(
-                    text = folder.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                when {
+                    folder.description.isBlank() -> Unit
+                    folder.description.length > 30 -> Text(
+                        text = folder.description.take(30) + "...",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    else -> Text(
+                        text = folder.description,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
             }
             Spacer(Modifier.width(16.dp))
             Box(
