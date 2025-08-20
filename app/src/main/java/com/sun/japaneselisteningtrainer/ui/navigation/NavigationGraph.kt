@@ -38,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +52,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryDestination
@@ -71,8 +69,6 @@ import com.sun.japaneselisteningtrainer.ui.home.HomeScreen
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Add
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.destinationRoutes
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.items
-import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Folder
-import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Home
 import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
 sealed class NavItem(
@@ -152,9 +148,10 @@ fun TrainerNavHost(
             FolderAudioListScreen(
                 navigateBar = {
                     TrainerNavigationBar(
-                        navController = navController
+                        navController = navController,
                     )
-                }
+                },
+                onNavigateUp = navController::navigateUp
             )
         }
 

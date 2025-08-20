@@ -1,7 +1,7 @@
 package com.sun.japaneselisteningtrainer.ui.folder.audiolists
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -23,7 +23,6 @@ import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.ui.folder.AddButton
-import com.sun.japaneselisteningtrainer.ui.folder.FolderListDestination
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
 
 object FolderAudioListDestination : NavigationDestination {
@@ -38,7 +37,8 @@ object FolderAudioListDestination : NavigationDestination {
 fun FolderAudioListScreen(
     modifier: Modifier = Modifier,
     viewModel: FolderAudioListViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigateBar: @Composable () -> Unit
+    navigateBar: @Composable () -> Unit,
+    onNavigateUp: () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var createFolderRequired by remember { mutableStateOf(false) }
@@ -50,8 +50,9 @@ fun FolderAudioListScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TrainerTopAppBar(
-                title = stringResource(FolderListDestination.titleRes),
+                title = stringResource(FolderAudioListDestination.titleRes),
                 canNavigateBack = true,
+                navigateUp = { onNavigateUp() },
                 scrollBehavior = scrollBehavior,
                 actions = {
                     AddButton(
@@ -67,7 +68,7 @@ fun FolderAudioListScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { padding ->
-        Box {
+        Box(modifier = Modifier.padding(padding)) {
             Text(
                 text = "Folder " + viewModel.folderId
             )
