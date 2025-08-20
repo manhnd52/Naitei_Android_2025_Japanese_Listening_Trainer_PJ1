@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material3.Button
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
+import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.model.Folder
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.ui.folder.AddButton
@@ -66,7 +69,7 @@ fun FolderAudioListScreen(
     navigateBar: @Composable () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val uiState = viewModel.uiState
+    val uiState by viewModel.uiState
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var createFolderRequired by remember { mutableStateOf(false) }
     val snackBarHostState = remember { SnackbarHostState() }
@@ -95,7 +98,12 @@ fun FolderAudioListScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { padding ->
-        FolderHeader(modifier.padding(padding), folder = uiState.value.folder!!)
+        Column(modifier = Modifier.padding(padding)) {
+            FolderHeader(modifier.border(1.dp, MaterialTheme.colorScheme.outline), folder = uiState.folder!!)
+            AudioList(
+                audioList = uiState.audioList
+            )
+        }
     }
 }
 
@@ -190,5 +198,20 @@ fun FolderHeaderReview() {
         FolderHeader(
             folder = Folder(1, "Folder", "Description")
         )
+    }
+}
+
+@Composable
+fun AudioList(
+    modifier: Modifier = Modifier,
+    audioList: List<Audio>,
+) {
+    LazyColumn(
+        modifier = modifier
+            .padding(16.dp)
+    ) {
+        items(audioList) { item ->
+            Text(text = "${item.id} - ${item.title}")
+        }
     }
 }

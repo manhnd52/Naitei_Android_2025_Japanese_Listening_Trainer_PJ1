@@ -42,4 +42,8 @@ class MockAudioRepository : AudioRepository {
             emit(audio)
         }
     }
+
+    override fun getFolderAudiosStream(folderId: Int): Flow<List<Audio>> {
+        TODO()
+    }
 }

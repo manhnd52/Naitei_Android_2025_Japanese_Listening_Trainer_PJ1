@@ -10,4 +10,5 @@ interface AudioRepository {
     suspend fun update(audio: Audio)
     fun getAllAudioStream(): Flow<List<Audio>>
     fun getAudioStream(id: Int): Flow<Audio?>
+    fun getFolderAudiosStream(folderId: Int): Flow<List<Audio>>
 }

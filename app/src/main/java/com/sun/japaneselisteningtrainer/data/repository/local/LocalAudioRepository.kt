@@ -1,22 +1,27 @@
 package com.sun.japaneselisteningtrainer.data.repository.local
 
 import android.content.ContentValues
+import android.database.Cursor
 import android.net.Uri
 import android.provider.BaseColumns
 import android.util.Log
 import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.repository.AudioRepository
 import com.sun.japaneselisteningtrainer.data.storage.AudioFileStorage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 interface ChangeObserver {
     fun onChanged()
 }
 
+// TODO: Flow ần được đưa vào Dispatcher.IO
 class DbChangeNotifier {
     private val observers = mutableListOf<ChangeObserver>()
 
@@ -87,55 +92,25 @@ class LocalAudioRepository(dbHelper: JLTDbHelper, private val audioFileStorage: 
     }
 
     override fun getAllAudioStream(): Flow<List<Audio>> = callbackFlow {
-
-        fun query(): List<Audio> {
+        suspend fun query(): List<Audio> = withContext(Dispatchers.IO) {
             val audioList = mutableListOf<Audio>()
             val query = "SELECT * FROM ${JLTContract.Audio.TABLE_NAME}"
             val cursor = db.rawQuery(query, null)
             if (cursor.moveToFirst()) {
                 do {
-                    val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
-                    val folderId =
-                        cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FOLDER_ID))
-                    val title =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TITLE))
-                    val filePath =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FILE_PATH))
-                    val script =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_SCRIPT))
-                    val translate =
-                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TRANSLATE))
-                    val isSuspended =
-                        (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_SUSPENDED)) == 1)
-                    val isFavorite =
-                        (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_FAVORITE)) == 1)
-                    val listenTimes =
-                        cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
-                    val createdAt =
-                        cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
-                    val audio = Audio(
-                        id,
-                        title,
-                        folderId,
-                        filePath,
-                        script,
-                        translate,
-                        isSuspended,
-                        isFavorite,
-                        listenTimes,
-                        createdAt
-                    )
-                    audioList.add(audio)
+                    audioList.add(cursor.toAudio())
                 } while (cursor.moveToNext())
             }
             cursor.close()
-            return audioList
+            return@withContext audioList
         }
 
         val observer = object : ChangeObserver {
             override fun onChanged() {
                 try {
-                    trySend(query()).isSuccess
+                    launch {
+                        trySend(query()).isSuccess
+                    }
                 } catch (e: Exception) {
                     Log.v("MyTag", e.toString())
                 }
@@ -152,48 +127,21 @@ class LocalAudioRepository(dbHelper: JLTDbHelper, private val audioFileStorage: 
     }
 
     override fun getAudioStream(id: Int): Flow<Audio?> = callbackFlow {
-        fun query(): Audio? {
+        suspend fun query(): Audio? = withContext(Dispatchers.IO) {
             val query = "SELECT * FROM ${JLTContract.Audio.TABLE_NAME} WHERE ${BaseColumns._ID} = ?"
             val cursor = db.rawQuery(query, arrayOf(id.toString()))
             if (cursor.moveToFirst()) {
-                val folderId =
-                    cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FOLDER_ID))
-                val title =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TITLE))
-                val filePath =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FILE_PATH))
-                val script =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_SCRIPT))
-                val translate =
-                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TRANSLATE))
-                val isSuspended =
-                    (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_SUSPENDED)) == 1)
-                val isFavorite =
-                    (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_FAVORITE)) == 1)
-                val listenTimes =
-                    cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
-                val createdAt =
-                    cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
-                return Audio(
-                    id,
-                    title,
-                    folderId,
-                    filePath,
-                    script,
-                    translate,
-                    isSuspended,
-                    isFavorite,
-                    listenTimes,
-                    createdAt
-                )
+                return@withContext cursor.toAudio()
             }
             cursor.close()
-            return null
+            return@withContext null
         }
 
         val observer = object : ChangeObserver {
             override fun onChanged() {
-                trySend(query()).isSuccess
+                launch {
+                    trySend(query()).isSuccess
+                }
             }
         }
 
@@ -204,4 +152,68 @@ class LocalAudioRepository(dbHelper: JLTDbHelper, private val audioFileStorage: 
             notifier.remove(observer)
         }
     }
+
+    override fun getFolderAudiosStream(folderId: Int): Flow<List<Audio>> = callbackFlow {
+        suspend fun query(): List<Audio> = withContext(Dispatchers.IO) {
+            val audioList = mutableListOf<Audio>()
+            val query = "SELECT * FROM ${JLTContract.Audio.TABLE_NAME} WHERE ${JLTContract.Audio.COLUMN_FOLDER_ID} = ?"
+            val cursor = db.rawQuery(query, arrayOf(folderId.toString()))
+            if (cursor.moveToFirst()) {
+                do { audioList.add(cursor.toAudio()) } while (cursor.moveToNext())
+            }
+            cursor.close()
+            return@withContext audioList
+        }
+
+        val observer = object : ChangeObserver {
+            override fun onChanged() {
+                launch {
+                    trySend(query()).isSuccess
+                }
+            }
+        }
+
+        notifier.register(observer)
+        trySend(query()).isSuccess
+
+        awaitClose {
+            notifier.remove(observer)
+        }
+    }
+}
+
+
+fun Cursor.toAudio(): Audio {
+    val cursor = this
+    val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
+    val folderId =
+        cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FOLDER_ID))
+    val title =
+        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TITLE))
+    val filePath =
+        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_FILE_PATH))
+    val script =
+        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_SCRIPT))
+    val translate =
+        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_TRANSLATE))
+    val isSuspended =
+        (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_SUSPENDED)) == 1)
+    val isFavorite =
+        (cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_IS_FAVORITE)) == 1)
+    val listenTimes =
+        cursor.getInt(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_LISTEN_TIMES))
+    val createdAt =
+        cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Audio.COLUMN_CREATED_AT))
+    return Audio(
+        id,
+        title,
+        folderId,
+        filePath,
+        script,
+        translate,
+        isSuspended,
+        isFavorite,
+        listenTimes,
+        createdAt
+    )
 }
