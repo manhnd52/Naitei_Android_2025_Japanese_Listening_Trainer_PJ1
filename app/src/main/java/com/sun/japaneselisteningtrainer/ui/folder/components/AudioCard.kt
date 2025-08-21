@@ -25,6 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,17 +55,17 @@ fun AudioItem(
                 onClick = onClick,
             ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = Color.Transparent,
         ),
         shape = MaterialTheme.shapes.large
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.dp_8)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             PlayPauseButton(
                 isPlaying = isPlaying,
-                onClick = onClick,
+                onClick = onPlayPause,
             )
             Spacer(Modifier.width(6.dp))
             Column {
@@ -97,10 +100,10 @@ fun PlayPauseButton(
         onClick = onClick
     ) {
         Icon(
-            modifier = Modifier.size(45.dp),
-            imageVector = if (isPlaying) Icons.Filled.PlayCircle else Icons.Filled.PauseCircle,
+            modifier = Modifier.size(37.dp),
+            imageVector = if (isPlaying) Icons.Filled.PauseCircle else Icons.Filled.PlayCircle,
             contentDescription = null,
-            tint = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (isPlaying) colorResource(R.color.pause_button_color) else MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -126,7 +129,7 @@ fun AudioItemPreview() {
     JapaneseListeningTrainerTheme {
         AudioItem(
             modifier = Modifier.fillMaxWidth(),
-            isPlaying = false,
+            isPlaying = true,
             info = AudioItemInfo(
                 id = 1,
                 title = "Title",

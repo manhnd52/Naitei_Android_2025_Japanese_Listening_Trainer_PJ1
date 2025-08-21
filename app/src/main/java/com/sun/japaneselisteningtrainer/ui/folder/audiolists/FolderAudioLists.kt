@@ -1,31 +1,33 @@
 package com.sun.japaneselisteningtrainer.ui.folder.audiolists
 
-import android.graphics.Bitmap
-import android.widget.Space
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -36,11 +38,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,13 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.TrainerTopAppBar
-import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.model.Folder
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.ui.folder.AddButton
 import com.sun.japaneselisteningtrainer.ui.folder.components.AudioItem
 import com.sun.japaneselisteningtrainer.ui.folder.components.AudioItemInfo
-import com.sun.japaneselisteningtrainer.ui.folder.components.toAudioItemInfo
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
 import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
@@ -88,7 +88,6 @@ fun FolderAudioListScreen(
                 title = stringResource(FolderAudioListDestination.titleRes),
                 canNavigateBack = true,
                 navigateUp = { onNavigateUp() },
-                scrollBehavior = scrollBehavior,
                 actions = {
                     AddButton(
                         onClick = { createFolderRequired = true }
@@ -104,11 +103,16 @@ fun FolderAudioListScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            FolderHeader(modifier.border(1.dp, MaterialTheme.colorScheme.outline), folder = uiState.folder!!)
+            FolderHeader(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                folder = uiState.folder
+            )
+            HorizontalDivider()
             AudioList(
                 playingAudioId = uiState.playingAudioId,
                 audioItemInfoList = uiState.audioItemInfoList,
                 onPlayPause = { viewModel.playPause(it) }
+                onFavorite = { viewModel.favorite(it) }
             )
         }
     }
@@ -117,30 +121,43 @@ fun FolderAudioListScreen(
 @Composable
 fun FolderHeader(
     modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     folder: Folder,
     onStudyClick: () -> Unit = {},
 ) {
-    Column(modifier = modifier
-        .fillMaxWidth()
-        .padding(16.dp)) {
-        Row(
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Thumbnail()
-            Spacer(Modifier.width(10.dp))
-            StudyButton(
-                onClick = onStudyClick
-            )
+    Surface(
+        modifier = modifier.height(IntrinsicSize.Max),
+        color = color
+    ) {
+        Row(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier) {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    Thumbnail()
+                    Spacer(Modifier.width(10.dp))
+                }
+                Spacer(Modifier.height(20.dp))
+                FolderTitle(
+                    modifier = Modifier,
+                    title = folder.name
+                )
+                FolderDescription(
+                    description = folder.description
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.Bottom) {
+                StudyButton(
+                    onClick = onStudyClick
+                )
+            }
         }
-        Spacer(Modifier.height(20.dp))
-        FolderTitle(
-            modifier = Modifier,
-            title = folder.name
-        )
-        FolderDescription(
-            description = folder.description
-        )
+
     }
+
 }
 
 @Composable
@@ -165,6 +182,9 @@ fun StudyButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(
         modifier = modifier,
         onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = colorResource(R.color.study_button_color)
+        )
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Study", style = MaterialTheme.typography.bodyLarge)
@@ -213,7 +233,8 @@ fun AudioList(
     modifier: Modifier = Modifier,
     playingAudioId: Int,
     audioItemInfoList: List<AudioItemInfo>,
-    onPlayPause: (audioId: Int) -> Unit = {},
+    onPlayPause: (audioId: Int) -> Unit,
+    onFavorite: (audioId: Int) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier

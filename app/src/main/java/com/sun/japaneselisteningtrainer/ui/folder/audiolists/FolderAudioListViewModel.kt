@@ -10,6 +10,7 @@ import com.sun.japaneselisteningtrainer.data.model.Folder
 import com.sun.japaneselisteningtrainer.data.repository.AudioRepository
 import com.sun.japaneselisteningtrainer.ui.folder.components.AudioItemInfo
 import com.sun.japaneselisteningtrainer.ui.folder.components.toAudioItemInfo
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -21,7 +22,7 @@ class FolderAudioListViewModel(
 ) : ViewModel() {
     val folderId: Int = checkNotNull(savedStateHandle[FolderAudioListDestination.folderIdArg])
 
-    val uiState = mutableStateOf(FolderAudioListUiState())
+    val uiState = mutableStateOf(FolderAudioListUiState(Folder()))
 
     init {
         viewModelScope.launch {
@@ -29,6 +30,7 @@ class FolderAudioListViewModel(
                 .onEach {
                     Log.d("MyTag", "folder: $it")
                 }
+                .filterNotNull()
                 .collect {
                     uiState.value = uiState.value.copy(folder = it)
                 }
@@ -55,7 +57,7 @@ class FolderAudioListViewModel(
 }
 
 data class FolderAudioListUiState(
-    val folder: Folder? = null,
+    val folder: Folder,
     val audioItemInfoList: List<AudioItemInfo> = listOf(),
     val playingAudioId : Int = -1,
 )
