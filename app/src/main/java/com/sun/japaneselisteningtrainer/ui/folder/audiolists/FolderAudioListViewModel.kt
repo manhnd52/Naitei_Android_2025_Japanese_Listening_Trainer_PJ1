@@ -1,5 +1,7 @@
 package com.sun.japaneselisteningtrainer.ui.folder.audiolists
 
+import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -73,14 +76,13 @@ class FolderAudioListViewModel(
 
     fun playPause(audioId: Int) {
         viewModelScope.launch {
-            audioServiceManager.loadAndPlayAudio(audioId)
+            audioServiceManager.playPause(audioId)
         }
     }
 
     fun playAll() {
-        val firstAudioId = uiState.value.audioItemInfoList.firstOrNull()?.id ?: return
         viewModelScope.launch {
-            audioServiceManager.loadAndPlayAudio(firstAudioId, forceReload = true)
+            audioServiceManager.playFolder(uiState.value.folder.id)
         }
     }
 

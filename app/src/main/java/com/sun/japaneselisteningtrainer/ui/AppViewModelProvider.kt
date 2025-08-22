@@ -48,7 +48,8 @@ object AppViewModelProvider {
         // Initializer for AudioEntryViewModel
         initializer {
             AudioEntryViewModel(
-                trainerApplication().container.audioRepository
+                savedStateHandle = this.createSavedStateHandle(),
+                audioRepository = trainerApplication().container.audioRepository
             )
         }
 
