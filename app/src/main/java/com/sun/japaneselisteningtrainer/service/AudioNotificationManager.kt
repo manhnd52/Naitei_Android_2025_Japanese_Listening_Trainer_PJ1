@@ -6,18 +6,19 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Build
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat as MediaNotificationCompat
 import androidx.media3.common.Player
+import com.google.common.primitives.UnsignedBytes.toInt
 import com.sun.japaneselisteningtrainer.MainActivity
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.data.model.Audio
+import com.sun.japaneselisteningtrainer.ui.theme.md_theme_light_surfaceVariant
 
-/**
- * Quản lý notification cho audio playback
- * Hiển thị thông tin bài hát và controls trên notification
- */
 class AudioNotificationManager(private val context: Context) {
     
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -25,10 +26,7 @@ class AudioNotificationManager(private val context: Context) {
     init {
         createNotificationChannel()
     }
-    
-    /**
-     * Tạo notification channel
-     */
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -43,10 +41,7 @@ class AudioNotificationManager(private val context: Context) {
             notificationManager.createNotificationChannel(channel)
         }
     }
-    
-    /**
-     * Tạo notification cho audio playback
-     */
+
     fun createNotification(
         audio: Audio,
         isPlaying: Boolean,
@@ -62,28 +57,27 @@ class AudioNotificationManager(private val context: Context) {
             context, 0, contentIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        
+
+        val largeIcon = BitmapFactory.decodeResource(context.resources, R.drawable.mint_green_folder_with_blossom)
+
         return NotificationCompat.Builder(context, AudioServiceConstants.NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_headphones)
+            .setColorized(true)
+            .setColor(md_theme_light_surfaceVariant.toArgb())
             .setContentTitle(audio.title)
-            .setContentText("Japanese Listening Trainer")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(contentPendingIntent)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setShowWhen(false)
-            .setOngoing(isPlaying)
+            .setLargeIcon(largeIcon)
+            .setOnlyAlertOnce(true)
+            .setOngoing(isPlaying) // đang phát thì “ghim” để tránh vuốt tắt nhầm
             .addAction(createPreviousAction())
             .addAction(createPlayPauseAction(isPlaying))
             .addAction(createNextAction())
             .setStyle(
-                MediaNotificationCompat.MediaStyle()
-                    .setShowActionsInCompactView(0, 1, 2)
+                MediaNotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2) // ⏪10s, Play/Pause, Next
             )
             .build()
     }
-    
-    /**
-     * Tạo action Previous
-     */
+
     private fun createPreviousAction(): NotificationCompat.Action {
         val intent = Intent(context, AudioService::class.java).apply {
             action = AudioServiceConstants.ACTION_PREVIOUS
@@ -93,15 +87,12 @@ class AudioNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Action(
-            android.R.drawable.ic_media_previous,
+            R.drawable.ic_prev,
             "Previous",
             pendingIntent
         )
     }
-    
-    /**
-     * Tạo action Play/Pause
-     */
+
     private fun createPlayPauseAction(isPlaying: Boolean): NotificationCompat.Action {
         val action = if (isPlaying) {
             AudioServiceConstants.ACTION_PAUSE
@@ -118,19 +109,16 @@ class AudioNotificationManager(private val context: Context) {
         )
         
         val iconRes = if (isPlaying) {
-            android.R.drawable.ic_media_pause
+            R.drawable.ic_pause
         } else {
-            android.R.drawable.ic_media_play
+            R.drawable.ic_play
         }
         
         val title = if (isPlaying) "Pause" else "Play"
         
         return NotificationCompat.Action(iconRes, title, pendingIntent)
     }
-    
-    /**
-     * Tạo action Next
-     */
+
     private fun createNextAction(): NotificationCompat.Action {
         val intent = Intent(context, AudioService::class.java).apply {
             action = AudioServiceConstants.ACTION_NEXT
@@ -140,22 +128,16 @@ class AudioNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Action(
-            android.R.drawable.ic_media_next,
+            R.drawable.ic_next,
             "Next",
             pendingIntent
         )
     }
-    
-    /**
-     * Cập nhật notification hiện tại
-     */
+
     fun updateNotification(notification: Notification) {
         notificationManager.notify(AudioServiceConstants.NOTIFICATION_ID, notification)
     }
-    
-    /**
-     * Hủy notification
-     */
+
     fun cancelNotification() {
         notificationManager.cancel(AudioServiceConstants.NOTIFICATION_ID)
     }

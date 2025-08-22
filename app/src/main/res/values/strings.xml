@@ -43,4 +43,5 @@
     <string name="unknown_file">Unknown</string>
     <string name="no_file_selected">No file selected</string>
     <string name="upload_audio">Upload Audio</string>
+    <string name="please_add_transcript">Please add a transcript for this audio.</string>
 </resources>

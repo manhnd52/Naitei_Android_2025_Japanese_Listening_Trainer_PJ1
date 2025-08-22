@@ -3,13 +3,18 @@ package com.sun.japaneselisteningtrainer.ui.audio.player.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.pointerInput
@@ -20,8 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sun.japaneselisteningtrainer.R
 import kotlin.math.abs
-import kotlin.math.max
 
 /* ---------- 1) Lyric line: theo theme, không hard-code màu ---------- */
 @Composable
@@ -57,23 +62,13 @@ private fun LyricLine(
         lineHeight = 22.sp
     )
 }
+
 /* ---------- 2) LyricsBox: container dùng surfaceVariant theo theme ---------- */
 @Composable
 fun LyricsBox(
-    lines: List<String>,
-    currentLineIndex: Int,
-    currentLineProgress: Float,
-    onSeekToLine: (Int) -> Unit,
+    lines: String,
     modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
-
-    // Tự cuộn: đưa dòng hiện tại gần giữa viewport
-    LaunchedEffect(currentLineIndex) {
-        val target = max(currentLineIndex - 3, 0)
-        listState.animateScrollToItem(target)
-    }
-
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -82,25 +77,21 @@ fun LyricsBox(
         shadowElevation = 0.dp,
         modifier = modifier
     ) {
-        LazyColumn(
-            state = listState,
+        Column(
             modifier = Modifier
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = if (lines.isBlank()) Arrangement.Center else Arrangement.Top
         ) {
-            itemsIndexed(lines) { index, line ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .noRippleClickable { onSeekToLine(index) }
-                ) {
-                    LyricLine(
-                        text = line,
-                        isCurrent = (index == currentLineIndex),
-                        lineProgress = if (index == currentLineIndex) currentLineProgress else 0f
-                    )
-                }
-            }
+            if (lines.isBlank()) Text(
+                text = stringResource(R.string.please_add_transcript),
+                style = MaterialTheme.typography.displayMedium
+            ) else Text(
+                text = lines,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.displaySmall
+            )
         }
     }
 }
@@ -119,7 +110,7 @@ fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = composed {
 @Composable
 fun TranscriptContainer(
     visible: Boolean,
-    SWIPE_THRESHOLD_PX : Float = 100f,
+    SWIPE_THRESHOLD_PX: Float = 100f,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit

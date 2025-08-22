@@ -5,6 +5,7 @@ import android.os.Build
 import android.view.View
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -112,11 +113,16 @@ fun JapaneseListeningTrainerTheme(
 }
 
 private fun setUpEdgeToEdge(view: View, darkTheme: Boolean) {
+    val colorScheme = when {
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
+
     val window = (view.context as Activity).window
     WindowCompat.setDecorFitsSystemWindows(window, false)
     window.statusBarColor = Color.Transparent.toArgb()
     val navigationBarColor = when {
-        Build.VERSION.SDK_INT >= 29 -> Color.Transparent.toArgb()
+        Build.VERSION.SDK_INT >= 29 -> colorScheme.onSecondary.toArgb()
         Build.VERSION.SDK_INT >= 26 -> Color(0xFF, 0xFF, 0xFF, 0x63).toArgb()
         // Min sdk version for this app is 24, this block is for SDK versions 24 and 25
         else -> Color(0x00, 0x00, 0x00, 0x50).toArgb()

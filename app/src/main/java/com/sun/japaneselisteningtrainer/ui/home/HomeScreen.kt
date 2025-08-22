@@ -54,9 +54,11 @@ object HomeDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    navigateToMusicPlayer: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigationBar: @Composable () -> Unit
+    navigationBar: @Composable () -> Unit,
+    onNavigateToAudioPlayer: (Int) -> Unit
 ) {
     val homeUiState by homeViewModel.uiState.collectAsState()
 
@@ -105,7 +107,9 @@ fun HomeScreen(
                 AudioCard(
                     title = audio.title,
                     imageRes = R.drawable.logo,
-                    onClick = { homeViewModel.playAudio(audio) }
+                    onClick = {
+                        navigateToMusicPlayer(audio.id)
+                    }
                 )
             }
         }
@@ -207,7 +211,6 @@ fun MiniAudioPlayer(
 }
 
 
-
 @Composable
 fun FilterBar(
     currentFilter: AudioFilterType,
@@ -218,9 +221,20 @@ fun FilterBar(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FilterButton("All", currentFilter == AudioFilterType.ALL) { onFilterChange(AudioFilterType.ALL) }
-        FilterButton("Favorites", currentFilter == AudioFilterType.FAVORITES) { onFilterChange(AudioFilterType.FAVORITES) }
-        FilterButton("Recent", currentFilter == AudioFilterType.RECENT) { onFilterChange(AudioFilterType.RECENT) }
+        FilterButton(
+            "All",
+            currentFilter == AudioFilterType.ALL
+        ) { onFilterChange(AudioFilterType.ALL) }
+        FilterButton("Favorites", currentFilter == AudioFilterType.FAVORITES) {
+            onFilterChange(
+                AudioFilterType.FAVORITES
+            )
+        }
+        FilterButton("Recent", currentFilter == AudioFilterType.RECENT) {
+            onFilterChange(
+                AudioFilterType.RECENT
+            )
+        }
     }
 }
 

@@ -14,6 +14,12 @@ class TrainerApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppDataContainer(this)
+        container.audioServiceManager.bindToService()
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        container.audioServiceManager.unbindFromService()
     }
 
 }

@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.sun.japaneselisteningtrainer.data.folder.FolderRepository
 import com.sun.japaneselisteningtrainer.data.model.Folder
 
-class FolderFormViewModel (private val folderRepository: FolderRepository) : ViewModel() {
-
-}
+class FolderFormViewModel (private val folderRepository: FolderRepository) : ViewModel()
 
 data class FolderFormUiState(
     val title: String = "",

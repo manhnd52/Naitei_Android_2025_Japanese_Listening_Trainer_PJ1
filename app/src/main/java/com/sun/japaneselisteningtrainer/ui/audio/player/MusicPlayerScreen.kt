@@ -3,24 +3,40 @@ package com.sun.japaneselisteningtrainer.ui.audio.player
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import com.sun.japaneselisteningtrainer.TrainerTopAppBar
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.R
-import com.sun.japaneselisteningtrainer.TrainerApplication
+import com.sun.japaneselisteningtrainer.TrainerTopAppBar
 import com.sun.japaneselisteningtrainer.data.model.Audio
-import com.sun.japaneselisteningtrainer.service.AudioServiceManager
-import com.sun.japaneselisteningtrainer.service.AudioServiceManagerSingleton
-import kotlinx.coroutines.launch
+import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.AudioProgressBar
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.EditAudioButton
 import com.sun.japaneselisteningtrainer.ui.audio.player.components.LyricsBox
@@ -46,62 +62,40 @@ fun MusicPlayerScreen(
     audioId: Int = 1, // ID của audio cần phát
     onNavigationBack: () -> Unit,
     onEditAudio: () -> Unit,
+    musicPlayerViewModel: MusicPlayerViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
-    // Get AudioServiceManager instance với repository
-    val audioServiceManager = remember {
-        AudioServiceManagerSingleton.getInstance(context)
-    }
-    
-    // Observe service states
-    val isServiceConnected by audioServiceManager.isServiceConnected.collectAsState()
-    val isPlaying by audioServiceManager.isPlaying.collectAsState()
-    val currentPosition by audioServiceManager.currentPosition.collectAsState()
-    val duration by audioServiceManager.duration.collectAsState()
-    val currentAudio by audioServiceManager.currentAudio.collectAsState()
-    
-    // Loading state cho audio data
-    var isLoadingAudio by remember { mutableStateOf(true) }
-    var audioLoadError by remember { mutableStateOf<String?>(null) }
-    
-    // Bind to service when screen opens
-    LaunchedEffect(Unit) {
-        audioServiceManager.bindToService()
-    }
-    
-    // Load audio from database when audioId changes
+
+    // Observe ViewModel states
+    val isServiceConnected by musicPlayerViewModel.isServiceConnected.collectAsState()
+    val isPlaying by musicPlayerViewModel.isPlaying.collectAsState()
+    val currentPosition by musicPlayerViewModel.currentPosition.collectAsState()
+    val duration by musicPlayerViewModel.duration.collectAsState()
+    val currentAudio by musicPlayerViewModel.currentAudioWithOverride.collectAsState()
+    val isLoadingAudio by musicPlayerViewModel.isLoadingAudio.collectAsState()
+    val audioLoadError by musicPlayerViewModel.audioLoadError.collectAsState()
+
+    // Service đã được bind trong MainActivity.onCreate()
+    // Không cần bind lại ở đây
+
+    // Load audio from database only khi cần thiết
     LaunchedEffect(audioId, isServiceConnected) {
         if (isServiceConnected) {
-            isLoadingAudio = true
-            audioLoadError = null
-            
-            try {
-                audioServiceManager.loadAndPlayAudio(audioId)
-                isLoadingAudio = false
-            } catch (e: Exception) {
-                audioLoadError = "Không thể load audio: ${e.message}"
-                isLoadingAudio = false
+            val currentAudio = musicPlayerViewModel.currentAudio.value
+
+            // Chỉ load audio mới khi:
+            // 1. Không có audio nào đang được load
+            // 2. AudioId khác với audio hiện tại (thực sự là audio mới)
+            if (currentAudio == null || currentAudio.id != audioId) {
+                musicPlayerViewModel.loadAndPlayAudio(audioId)
             }
+            // Nếu cùng audio đang phát, không làm gì (để nhạc tiếp tục phát)
         }
     }
-    
-    // Increment listen times khi bắt đầu phát
-    LaunchedEffect(isPlaying, currentAudio) {
-        val audio = currentAudio
-        if (isPlaying && audio != null) {
-            // Chỉ increment một lần khi bắt đầu phát
-            audioServiceManager.incrementListenTimes(audio)
-        }
-    }
-    
-    // Cleanup when screen closes
-    DisposableEffect(Unit) {
-        onDispose {
-            audioServiceManager.unbindFromService()
-        }
-    }
+
+
+    // NOTE: Không unbind service khi back để nhạc tiếp tục phát cho mini player
+    // Service sẽ được unbind trong ViewModel.onCleared() hoặc khi app tắt hoàn toàn
     Scaffold(
         topBar = {
             TrainerTopAppBar(
@@ -146,9 +140,7 @@ fun MusicPlayerScreen(
                     )
                     Button(
                         onClick = {
-                            scope.launch {
-                                audioServiceManager.loadAndPlayAudio(audioId)
-                            }
+                            musicPlayerViewModel.loadAndPlayAudio(audioId)
                         }
                     ) {
                         Text("Thử lại")
@@ -160,11 +152,12 @@ fun MusicPlayerScreen(
             val audio = currentAudio
             if (audio != null) {
                 PlayerContainer(
-                    audioServiceManager = audioServiceManager,
+                    musicPlayerViewModel = musicPlayerViewModel,
                     isPlaying = isPlaying,
                     currentPosition = currentPosition,
                     duration = duration,
                     currentAudio = audio,
+                    audioId = audioId,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(inner)
@@ -187,11 +180,12 @@ fun MusicPlayerScreen(
 
 @Composable
 fun PlayerContainer(
-    audioServiceManager: AudioServiceManager,
+    musicPlayerViewModel: MusicPlayerViewModel,
     isPlaying: Boolean,
     currentPosition: Long,
     duration: Long,
     currentAudio: Audio,
+    audioId: Int,
     modifier: Modifier = Modifier
 ) {
     var isTranscriptVisible by remember { mutableStateOf(false) }
@@ -218,12 +212,18 @@ fun PlayerContainer(
                     modifier = Modifier
                         .padding(30.dp, 0.dp, 30.dp, 30.dp)
                         .fillMaxWidth(),
-                    isPlaying = isPlaying
+                    isPlaying = isPlaying,
+                    onDoubleClick = {
+                        // Double-tap để restart audio từ đầu (force reload)
+                        musicPlayerViewModel.forceReloadAudio(audioId)
+                    }
                 )
             } else {
                 LyricView(
                     audio = currentAudio,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 )
             }
             AudioTitle(
@@ -231,7 +231,7 @@ fun PlayerContainer(
                 title = currentAudio.title
             )
             AudioController(
-                audioServiceManager = audioServiceManager,
+                musicPlayerViewModel = musicPlayerViewModel,
                 isPlaying = isPlaying,
                 currentPosition = currentPosition,
                 duration = duration,
@@ -245,18 +245,14 @@ fun PlayerContainer(
 @Composable
 fun RotatingDiscBox(
     modifier: Modifier,
-    isPlaying: Boolean
+    isPlaying: Boolean,
+    onDoubleClick: () -> Unit = {}
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        RotatingDisc(
-            imageRes = R.drawable.son_tung,
-            isPlaying = isPlaying,
-            size = 260.dp            // có thể 260–280dp cho đẹp
-        )
-    }
+    RotatingDisc(
+        imageRes = R.drawable.cd,
+        isPlaying = isPlaying,
+        size = 280.dp
+    )
 }
 
 @Composable
@@ -276,24 +272,23 @@ fun AudioTitle(
 
 @Composable
 fun AudioController(
-    audioServiceManager: AudioServiceManager,
+    musicPlayerViewModel: MusicPlayerViewModel,
     isPlaying: Boolean,
     currentPosition: Long,
     duration: Long,
     currentAudio: Audio,
     modifier: Modifier = Modifier
 ) {
-    val scope = rememberCoroutineScope()
     Column(
         modifier = modifier,
     ) {
         AudioProgressBar(
-            progress = audioServiceManager.getProgress(),
+            progress = musicPlayerViewModel.getProgress(),
             currentPosition = currentPosition,
             duration = duration,
             onSeek = { progress ->
                 val newPosition = (duration * progress).toLong()
-                audioServiceManager.seekTo(newPosition)
+                musicPlayerViewModel.seekTo(newPosition)
             },
             onSeekFinished = { },
             modifier = Modifier.padding(horizontal = 8.dp)
@@ -301,19 +296,15 @@ fun AudioController(
         Spacer(Modifier.height(8.dp))
         TransportBar(
             isPlaying = isPlaying,
-            isShuffleOn = audioServiceManager.isShuffleEnabled(),
+            isShuffleOn = musicPlayerViewModel.isShuffleEnabled(),
             isFavorite = currentAudio.isFavorite,
-            onToggleShuffle = { audioServiceManager.toggleShuffle() },
-            onPrevious = { audioServiceManager.previousTrack() },
-            onPlayPause = { audioServiceManager.togglePlayPause() },
-            onNext = { audioServiceManager.nextTrack() },
-            onToggleFavorite = { 
+            onToggleShuffle = { musicPlayerViewModel.toggleShuffle() },
+            onPrevious = { musicPlayerViewModel.previousTrack() },
+            onPlayPause = { musicPlayerViewModel.togglePlayPause() },
+            onNext = { musicPlayerViewModel.nextTrack() },
+            onToggleFavorite = {
                 // Toggle favorite trong database
-                currentAudio?.let { audio ->
-                    scope.launch {
-                        audioServiceManager.toggleFavoriteStatus(audio)
-                    }
-                }
+                musicPlayerViewModel.toggleFavoriteStatus(currentAudio)
             }
         )
     }
@@ -321,23 +312,16 @@ fun AudioController(
 
 @Composable
 fun LyricView(
-    modifier: Modifier = Modifier,
-    audio: Audio
+    audio: Audio,
+    modifier: Modifier = Modifier
 ) {
     // Split script thành lines
     val scriptLines = remember(audio.script) {
         audio.script.split("\n").filter { it.isNotBlank() }
     }
-    
+
     LyricsBox(
-        lines = scriptLines,
-        currentLineIndex = 0, // TODO: Track current line based on playback position
-        currentLineProgress = 0f, // TODO: Calculate line progress
-        onSeekToLine = { lineIndex -> 
-            // TODO: Map line index to time position và seek
-            // Tạm thời seek về đầu
-            // audioServiceManager.seekTo(0L)
-        },
+        lines = audio.script,
         modifier = modifier
     )
 }
