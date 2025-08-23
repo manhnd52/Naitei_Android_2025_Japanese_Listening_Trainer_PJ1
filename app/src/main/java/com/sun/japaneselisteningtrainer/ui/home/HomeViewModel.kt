@@ -79,9 +79,9 @@ class HomeViewModel(
         audioServiceManager.nextTrack()
     }
 
-    fun toggleFavorite(audio: Audio) {
+    fun toggleFavorite(audioId: Int) {
         viewModelScope.launch {
-            audioServiceManager.toggleFavoriteStatus(audio)
+            audioServiceManager.toggleFavoriteStatus(audioId)
         }
     }
 

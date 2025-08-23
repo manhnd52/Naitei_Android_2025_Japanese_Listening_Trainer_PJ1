@@ -113,6 +113,7 @@ fun AudioEntryScreen(
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.dp_16)))
 
             CustomTextField(
+                modifier = Modifier.weight(1f),
                 label = stringResource(R.string.audio_script),
                 value = audioForm.script,
                 onValueChange = {
@@ -132,7 +133,7 @@ fun AudioEntryScreen(
                     }
                 },
                 label = { Text(stringResource(R.string.translation)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 trailingIcon = {
                     IconButton(
                         onClick = {
@@ -293,6 +294,7 @@ fun AudioEditScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomTextField(
+    modifier: Modifier = Modifier,
     label: String,
     value: String,
     onValueChange: (String) -> Unit
@@ -301,7 +303,7 @@ fun CustomTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     )
 }
 

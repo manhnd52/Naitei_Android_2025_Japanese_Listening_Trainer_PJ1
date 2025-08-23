@@ -2,20 +2,25 @@ package com.sun.japaneselisteningtrainer.service
 
 import android.content.Context
 import android.util.Log
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.sun.japaneselisteningtrainer.data.model.Audio
 
 class AudioPlayer(private val context: Context) {
-    
+
     companion object {
         private const val TAG = "AudioPlayer"
     }
 
     private val _exoPlayer = ExoPlayer.Builder(context).build()
     private val exoPlayer: ExoPlayer get() = _exoPlayer
-
+    private val audioAttributes: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(C.USAGE_MEDIA)
+        .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
+        .build()
 
     // Callback interface
     interface AudioPlayerCallback {
@@ -25,11 +30,16 @@ class AudioPlayer(private val context: Context) {
         fun onError(error: String)
         fun onAudioCompleted()
     }
-    
+
     private var callback: AudioPlayerCallback? = null
-    
+
     init {
         setupPlayerListener()
+        setupPlayerAttributes()
+    }
+
+    private fun setupPlayerAttributes() {
+        exoPlayer.setAudioAttributes(audioAttributes, true)
     }
 
     private fun setupPlayerListener() {
@@ -37,11 +47,11 @@ class AudioPlayer(private val context: Context) {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 updatePlaybackState(playbackState)
             }
-            
+
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 callback?.onIsPlayingChanged(isPlaying)
             }
-            
+
             override fun onPositionDiscontinuity(
                 oldPosition: Player.PositionInfo,
                 newPosition: Player.PositionInfo,
@@ -49,7 +59,7 @@ class AudioPlayer(private val context: Context) {
             ) {
                 updatePosition()
             }
-            
+
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 callback?.onError("Playback error: ${error.message}")
             }
@@ -98,13 +108,15 @@ class AudioPlayer(private val context: Context) {
 
     private fun updatePlaybackState(state: Int) {
         when (state) {
-            Player.STATE_IDLE -> { }
+            Player.STATE_IDLE -> {}
             Player.STATE_BUFFERING -> {
                 // Giữ nguyên state hiện tại khi buffering
             }
+
             Player.STATE_READY -> {
                 updatePosition()
             }
+
             Player.STATE_ENDED -> {
                 callback?.onPositionChanged(0L, getDuration())
                 callback?.onAudioCompleted()
@@ -115,7 +127,7 @@ class AudioPlayer(private val context: Context) {
     private fun updatePosition() {
         val position = getCurrentPosition()
         val duration = getDuration()
-        
+
         callback?.onPositionChanged(position, duration)
     }
 

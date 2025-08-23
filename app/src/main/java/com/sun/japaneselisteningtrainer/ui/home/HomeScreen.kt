@@ -92,7 +92,7 @@ fun HomeScreen(
                         },
                         onPrevious = { homeViewModel.playPrevious() },
                         onNext = { homeViewModel.playNext() },
-                        onFavorite = { homeViewModel.toggleFavorite(it) },
+                        onFavorite = { homeViewModel.toggleFavorite(it.id) },
                         onClickPlayer = { navigateToMusicPlayer(it.id) }
                     )
                 }
@@ -117,7 +117,7 @@ fun HomeScreen(
                         navigateToMusicPlayer(audio.id)
                     },
                     onFavoriteClick = {
-                        homeViewModel.toggleFavorite(audio)
+                        homeViewModel.toggleFavorite(audio.id)
                     }
                 )
             }

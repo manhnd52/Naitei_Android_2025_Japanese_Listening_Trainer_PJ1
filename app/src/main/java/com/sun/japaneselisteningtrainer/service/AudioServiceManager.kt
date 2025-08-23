@@ -154,7 +154,7 @@ class AudioServiceManager(
     /**
      * Load audio from database and play
      */
-    suspend fun loadAndPlayAudio(audioId: Int, forceReload: Boolean = false) {
+    suspend fun loadAndPlayAudio(audioId: Int, forceReload: Boolean = false) = withContext(Dispatchers.IO) {
         playAudio(audioId)
         if (forceReload || lastPlayedAudioId != audioId) {
             incrementListenTimes(audioId)
@@ -166,8 +166,9 @@ class AudioServiceManager(
     /**
      * Toggle favorite status and update database
      */
-    suspend fun toggleFavoriteStatus(audio: Audio) {
+    suspend fun toggleFavoriteStatus(audioId: Int) {
         try {
+            val audio = audioRepository.getAudioStream(audioId).first() ?: throw Exception("Not found audio")
             val updatedAudio = audio.copy(isFavorite = !audio.isFavorite)
             audioRepository.update(updatedAudio)
             
@@ -176,7 +177,6 @@ class AudioServiceManager(
                 _currentAudio.value = updatedAudio
             }
             
-            Log.d(TAG, "Toggled favorite for: ${audio.title}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to toggle favorite: ${e.message}")
             throw e
@@ -193,6 +193,16 @@ class AudioServiceManager(
             audioRepository.update(updatedAudio)
         } catch (e: Exception) {
             throw e
+        }
+    }
+
+    fun playPause(audioId: Int) {
+        if (audioId == currentAudio.value?.id) {
+            togglePlayPause()
+        } else {
+            managerScope?.launch {
+                loadAndPlayAudio(audioId)
+            }
         }
     }
 }

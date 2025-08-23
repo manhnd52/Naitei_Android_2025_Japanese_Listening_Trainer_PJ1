@@ -82,7 +82,7 @@ class FolderAudioListViewModel(
 
     fun playAll() {
         viewModelScope.launch {
-            audioServiceManager.playFolder(uiState.value.folder.id)
+            audioServiceManager.playPlaylist(uiState.value.folder.id)
         }
     }
 

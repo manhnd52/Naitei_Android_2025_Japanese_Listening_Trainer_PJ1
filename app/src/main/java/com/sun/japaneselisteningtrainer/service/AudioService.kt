@@ -85,10 +85,7 @@ class AudioService : Service(), AudioPlayer.AudioPlayerCallback {
         if (id == null) {
             audioRepository.getAllAudioStream()
         } else {
-            //TODO: Fix to getFolderAudiosStream
-            audioRepository.getAllAudioStream().map { audioList ->
-                audioList.filter { it.folderId == id }
-            }
+            audioRepository.getFolderAudiosStream(id)
         }
     }.stateIn(
         scope = serviceScope,
