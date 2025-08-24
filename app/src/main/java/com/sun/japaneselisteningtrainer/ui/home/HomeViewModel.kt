@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,9 +18,6 @@ enum class AudioFilterType {
 
 data class HomeUiState(
     val audioList: List<Audio> = emptyList(),
-    val currentAudio: Audio? = null,
-    val isPlaying: Boolean = false,
-    val isShuffleOn: Boolean = false,
     val filterType: AudioFilterType = AudioFilterType.ALL
 )
 
@@ -34,10 +30,8 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = combine(
         audioRepository.getAllAudioStream(),
-        _filterType,
-        audioServiceManager.currentAudio,
-        audioServiceManager.isPlaying
-    ) { audioList, filterType, currentAudio, isPlaying ->
+        _filterType
+    ) { audioList, filterType ->
         val filteredList = when (filterType) {
             AudioFilterType.ALL -> audioList
             AudioFilterType.FAVORITES -> audioList.filter { it.isFavorite }
@@ -46,9 +40,6 @@ class HomeViewModel(
 
         HomeUiState(
             audioList = filteredList,
-            currentAudio = currentAudio,
-            isPlaying = isPlaying,
-            isShuffleOn = audioServiceManager.isShuffleEnabled(),
             filterType = filterType
         )
     }.stateIn(
@@ -61,32 +52,10 @@ class HomeViewModel(
         _filterType.value = type
     }
 
-    fun playAudio(audio: Audio) {
-        viewModelScope.launch {
-            audioServiceManager.loadAndPlayAudio(audio.id)
-        }
-    }
-
-    fun pauseAudio() {
-        audioServiceManager.togglePlayPause()
-    }
-
-    fun playPrevious() {
-        audioServiceManager.previousTrack()
-    }
-
-    fun playNext() {
-        audioServiceManager.nextTrack()
-    }
-
     fun toggleFavorite(audioId: Int) {
         viewModelScope.launch {
             audioServiceManager.toggleFavoriteStatus(audioId)
         }
-    }
-
-    fun toggleShuffle() {
-        audioServiceManager.toggleShuffle()
     }
 
     companion object {

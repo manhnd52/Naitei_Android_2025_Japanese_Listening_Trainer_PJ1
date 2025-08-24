@@ -22,16 +22,17 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.sun.japaneselisteningtrainer.ui.home.HomeViewModel
 import com.sun.japaneselisteningtrainer.TrainerApplication
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryViewModel
+import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerViewModel
+import com.sun.japaneselisteningtrainer.ui.components.AudioMenuDialogViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.FolderListViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.audiolists.FolderAudioListViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.components.FolderPickerViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.create.CreateFolderViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.edit.EditFolderViewModel
-import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerViewModel
-import com.sun.japaneselisteningtrainer.ui.components.AudioMenuDialogViewModel
+import com.sun.japaneselisteningtrainer.ui.home.HomeViewModel
+import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayerViewModel
 
 /**
  * Provides Factory to create instance of ViewModel for the entire Japanese Listening Trainer app
@@ -103,6 +104,13 @@ object AppViewModelProvider {
                 audioRepository = trainerApplication().container.audioRepository
             )
         }
+        // Initializer cho MiniAudioPlayerViewModel
+        initializer {
+            MiniAudioPlayerViewModel(
+                audioServiceManager = trainerApplication().container.audioServiceManager
+            )
+        }
+
     }
 }
 

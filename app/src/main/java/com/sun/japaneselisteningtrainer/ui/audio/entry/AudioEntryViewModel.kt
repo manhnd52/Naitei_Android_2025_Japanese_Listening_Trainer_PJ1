@@ -24,7 +24,7 @@ class AudioEntryViewModel(
 
     private fun validateInput(audioForm: AudioForm): Boolean {
         return with(audioForm) {
-            title.isNotBlank() && script.isNotBlank()
+            title.isNotBlank() && script.isNotBlank() && translate.isNotBlank()
         }
     }
 

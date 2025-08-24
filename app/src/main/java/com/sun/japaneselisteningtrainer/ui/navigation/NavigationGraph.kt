@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,19 +47,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryDestination
-import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryScreen
+import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEditDestination
 import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEditScreen
+import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryDestination
+import com.sun.japaneselisteningtrainer.ui.audio.entry.AudioEntryScreen
 import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerDestination
 import com.sun.japaneselisteningtrainer.ui.audio.player.MusicPlayerScreen
 import com.sun.japaneselisteningtrainer.ui.components.AudioMenuDestination
@@ -69,10 +69,11 @@ import com.sun.japaneselisteningtrainer.ui.folder.audiolists.FolderAudioListDest
 import com.sun.japaneselisteningtrainer.ui.folder.audiolists.FolderAudioListScreen
 import com.sun.japaneselisteningtrainer.ui.home.HomeDestination
 import com.sun.japaneselisteningtrainer.ui.home.HomeScreen
+import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayer
+import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayerViewModel
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Add
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.destinationRoutes
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.items
-import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 
 sealed class NavItem(
     val icon: ImageVector,
@@ -97,8 +98,11 @@ sealed class NavItem(
 @Composable
 fun TrainerNavHost(
     navController: NavHostController,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
+    val miniAudioPlayerViewModel: MiniAudioPlayerViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel(factory = AppViewModelProvider.Factory)
+
     NavHost(
         navController = navController,
         startDestination = HomeDestination.route,
@@ -111,36 +115,37 @@ fun TrainerNavHost(
                 },
                 navigationBar = {
                     TrainerNavigationBar(
-                        navController = navController
+                        navController = navController,
+                        miniAudioPlayerViewModel = miniAudioPlayerViewModel,
+                        navigateToMusicPlayer = { audioId ->
+                            navController.navigate(MusicPlayerDestination.createRoute(audioId))
+                        }
                     )
                 },
                 onAudioLongClick = { audioId ->
-                    navController.navigate(
-                        AudioMenuDestination.createRoute(audioId)
-                    )
+                    navController.navigate(AudioMenuDestination.createRoute(audioId))
                 }
             )
         }
-
         composable(route = AudioEntryDestination.route) {
             AudioEntryScreen(
-                navigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigationUp = {
-                    navController.navigateUp()
-                }
+                navigateBack = { navController.popBackStack() },
+                onNavigationUp = { navController.navigateUp() }
             )
         }
         composable(route = FolderListDestination.route) {
             FolderListScreen(
                 navigateBar = {
                     TrainerNavigationBar(
-                        navController = navController
+                        navController = navController,
+                        miniAudioPlayerViewModel = miniAudioPlayerViewModel,
+                        navigateToMusicPlayer = { audioId ->
+                            navController.navigate(MusicPlayerDestination.createRoute(audioId))
+                        }
                     )
                 },
-                navigateToFolderAudioList = {
-                    navController.navigate("${FolderAudioListDestination.route}/$it")
+                navigateToFolderAudioList = { folderId ->
+                    navController.navigate("${FolderAudioListDestination.route}/$folderId")
                 }
             )
         }
@@ -154,17 +159,18 @@ fun TrainerNavHost(
                 navigateBar = {
                     TrainerNavigationBar(
                         navController = navController,
+                        miniAudioPlayerViewModel = miniAudioPlayerViewModel,
+                        navigateToMusicPlayer = { audioId ->
+                            navController.navigate(MusicPlayerDestination.createRoute(audioId))
+                        }
                     )
                 },
                 onNavigateUp = navController::navigateUp,
                 onAudioLongClick = { audioId ->
-                    navController.navigate(
-                        AudioMenuDestination.createRoute(audioId)
-                    )
+                    navController.navigate(AudioMenuDestination.createRoute(audioId))
                 }
             )
         }
-
         composable(
             route = MusicPlayerDestination.routeWithArgs,
             arguments = listOf(navArgument(MusicPlayerDestination.audioIdArg) {
@@ -179,7 +185,6 @@ fun TrainerNavHost(
                 onEditAudio = { navController.navigate(AudioEditDestination.createRoute(audioId)) }
             )
         }
-
         composable(
             route = AudioEditDestination.routeWithArgs,
             arguments = listOf(navArgument(AudioEditDestination.audioIdArg) {
@@ -193,7 +198,6 @@ fun TrainerNavHost(
                 onNavigationUp = { navController.navigateUp() }
             )
         }
-
         dialog(
             route = AudioMenuDestination.routeWithArgs,
             arguments = listOf(navArgument(AudioMenuDestination.audioIdArg) {
@@ -201,12 +205,10 @@ fun TrainerNavHost(
             })
         ) {
             AudioMenuDialog(
-                onEdit = {
-                    navController.navigate(AudioEditDestination.createRoute(it))
+                onEdit = { audioId ->
+                    navController.navigate(AudioEditDestination.createRoute(audioId))
                 },
-                onDismiss = {
-                    navController.navigateUp()
-                }
+                onDismiss = { navController.navigateUp() }
             )
         }
     }
@@ -214,46 +216,52 @@ fun TrainerNavHost(
 
 
 @Composable
-fun TrainerNavigationBar(navController: NavHostController) {
+fun TrainerNavigationBar(
+    navController: NavHostController,
+    miniAudioPlayerViewModel: MiniAudioPlayerViewModel,
+    navigateToMusicPlayer: (Int) -> Unit
+) {
     val navBackStackEntry = navController.currentBackStackEntry
-    var currentDes by remember { mutableStateOf(navBackStackEntry?.destination?.route!!) }
+    var currentDes by remember { mutableStateOf(navBackStackEntry?.destination?.route ?: "") }
 
     LaunchedEffect(navBackStackEntry) {
         val des = navBackStackEntry?.destination?.route
-        if (des in destinationRoutes) {
-            currentDes = des.toString()
-        }
+        if (des in destinationRoutes) currentDes = des.toString()
     }
+
+    val uiState by miniAudioPlayerViewModel.uiState.collectAsState()
 
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
-        modifier = Modifier.navigationBarsPadding(),
+        modifier = Modifier.navigationBarsPadding()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            for (item in items) {
-                val selected = currentDes == item.des?.route
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(4.dp)
-                ) {
+        Column {
+            uiState.currentAudio?.let { audio ->
+                MiniAudioPlayer(
+                    audioTitle = audio.title,
+                    isPlaying = uiState.isPlaying,
+                    isFavorite = audio.isFavorite,
+                    onPlayPause = { miniAudioPlayerViewModel.pauseAudio() },
+                    onPrevious = { miniAudioPlayerViewModel.playPrevious() },
+                    onNext = { miniAudioPlayerViewModel.playNext() },
+                    onFavorite = { miniAudioPlayerViewModel.toggleFavorite(audio.id) },
+                    onClickPlayer = { navigateToMusicPlayer(audio.id) }
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                for (item in items) {
+                    val selected = currentDes == item.des?.route
                     TrainerNavigationBarItem(
                         icon = item.icon,
-                        onClick = {
-                            item.des?.route?.let { navController.navigate(it) }
-                        },
-                        isSelected = when {
-                            item == Add -> true
-                            selected -> true
-                            else -> false
-                        }
+                        onClick = { item.des?.route?.let { navController.navigate(it) } },
+                        isSelected = item == Add || selected
                     )
                 }
             }
@@ -269,7 +277,7 @@ fun TrainerNavigationBarItem(
     isSelected: Boolean = false
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(48.dp)
             .background(
                 color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
@@ -280,21 +288,10 @@ fun TrainerNavigationBarItem(
         IconButton(onClick = onClick) {
             Icon(
                 imageVector = icon,
-                contentDescription = "",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp) // icon to hơn mặc định
+                modifier = Modifier.size(28.dp)
             )
         }
-    }
-}
-
-@Preview
-@Composable
-fun TrainerNavigationBarPreview() {
-    JapaneseListeningTrainerTheme {
-        val navController = rememberNavController()
-        TrainerNavigationBar(
-            navController = navController,
-        )
     }
 }

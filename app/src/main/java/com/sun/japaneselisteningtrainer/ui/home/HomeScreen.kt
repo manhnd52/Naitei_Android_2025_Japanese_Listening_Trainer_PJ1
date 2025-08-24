@@ -3,10 +3,8 @@ package com.sun.japaneselisteningtrainer.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,11 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,9 +28,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.R
 import com.sun.japaneselisteningtrainer.ui.AppViewModelProvider
-import com.sun.japaneselisteningtrainer.ui.folder.components.FolderPicker
 import com.sun.japaneselisteningtrainer.ui.navigation.NavigationDestination
 
 object HomeDestination : NavigationDestination {
@@ -82,24 +71,7 @@ fun HomeScreen(
         },
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            Column {
-                homeUiState.currentAudio?.let {
-                    MiniAudioPlayer(
-                        audioTitle = it.title,
-                        isPlaying = homeUiState.isPlaying,
-                        isFavorite = it.isFavorite,
-                        onPlayPause = {
-                            if (homeUiState.isPlaying) homeViewModel.pauseAudio()
-                            else homeViewModel.playAudio(it)
-                        },
-                        onPrevious = { homeViewModel.playPrevious() },
-                        onNext = { homeViewModel.playNext() },
-                        onFavorite = { homeViewModel.toggleFavorite(it.id) },
-                        onClickPlayer = { navigateToMusicPlayer(it.id) }
-                    )
-                }
-                navigationBar()
-            }
+            navigationBar()
         }
     ) { paddingValues ->
         LazyColumn(
@@ -115,7 +87,6 @@ fun HomeScreen(
                     imageRes = R.drawable.logo,
                     isFavorite = audio.isFavorite,
                     onClick = {
-                        homeViewModel.playAudio(audio)
                         navigateToMusicPlayer(audio.id)
                     },
                     onLongClick = { onAudioLongClick(audio.id) },
@@ -177,66 +148,6 @@ fun AudioCard(
 }
 
 @Composable
-fun MiniAudioPlayer(
-    audioTitle: String,
-    isPlaying: Boolean,
-    isFavorite: Boolean = false,
-    onPlayPause: () -> Unit,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    onFavorite: () -> Unit,
-    onClickPlayer: () -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable { onClickPlayer() }
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = audioTitle,
-            color = Color.Black,
-            modifier = Modifier.weight(1f)
-        )
-
-        IconButton(onClick = onPrevious) {
-            Icon(
-                imageVector = Icons.Default.SkipPrevious,
-                contentDescription = "Previous",
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-
-        IconButton(onClick = onPlayPause) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Play",
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-
-        IconButton(onClick = onNext) {
-            Icon(
-                imageVector = Icons.Default.SkipNext,
-                contentDescription = "Next",
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-
-        IconButton(onClick = onFavorite) {
-            Icon(
-                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = "Favorite",
-                tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-    }
-}
-
-
-@Composable
 fun FilterBar(
     currentFilter: AudioFilterType,
     onFilterChange: (AudioFilterType) -> Unit
@@ -251,14 +162,10 @@ fun FilterBar(
             currentFilter == AudioFilterType.ALL
         ) { onFilterChange(AudioFilterType.ALL) }
         FilterButton("Favorites", currentFilter == AudioFilterType.FAVORITES) {
-            onFilterChange(
-                AudioFilterType.FAVORITES
-            )
+            onFilterChange(AudioFilterType.FAVORITES)
         }
         FilterButton("Recent", currentFilter == AudioFilterType.RECENT) {
-            onFilterChange(
-                AudioFilterType.RECENT
-            )
+            onFilterChange(AudioFilterType.RECENT)
         }
     }
 }
