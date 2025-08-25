@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -84,7 +85,7 @@ fun HomeScreen(
             items(homeUiState.audioList) { audio ->
                 AudioCard(
                     title = audio.title,
-                    imageRes = R.drawable.logo,
+                    imageRes = R.drawable.cd_with_music_note,
                     isFavorite = audio.isFavorite,
                     onClick = {
                         navigateToMusicPlayer(audio.id)
@@ -113,6 +114,7 @@ fun AudioCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(12.dp)
             .combinedClickable(
@@ -134,7 +136,8 @@ fun AudioCard(
             text = title,
             color = Color.Black,
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2,
         )
 
         IconButton(onClick = onFavoriteClick) {
@@ -179,14 +182,15 @@ fun FilterButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.secondary
-            else MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant
+            else Color.Transparent,
+        ),
+        border = ButtonDefaults.outlinedButtonBorder(!isSelected),
     ) {
         Text(
             text = text,
-            color = if (isSelected) MaterialTheme.colorScheme.onSecondary
-            else Color.Black
+            color = if (isSelected) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onPrimary
         )
     }
 }

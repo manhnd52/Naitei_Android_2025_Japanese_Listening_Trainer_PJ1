@@ -40,10 +40,11 @@ import com.sun.japaneselisteningtrainer.ui.theme.JapaneseListeningTrainerTheme
 fun AudioItem(
     modifier: Modifier = Modifier,
     info: AudioItemInfo,
+    canPlay: Boolean = true,
     isPlaying: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onPlayPause: () -> Unit,
+    onPlayPause: () -> Unit = { },
     onFavorite: () -> Unit,
 ) {
     Card(
@@ -63,7 +64,7 @@ fun AudioItem(
             modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.dp_8)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PlayPauseButton(
+            if (canPlay) PlayPauseButton(
                 isPlaying = isPlaying,
                 onClick = onPlayPause,
             )

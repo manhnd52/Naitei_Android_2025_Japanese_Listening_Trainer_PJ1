@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -265,11 +266,24 @@ fun FolderItem(
             Box(
                 modifier = Modifier.size(72.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.percent_string, 50),
-                    style = MaterialTheme.typography.displayLarge,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.align(Alignment.Center)
-                )
+                ) {
+                    Text(
+                        text = folder.audioCount.toString(),
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .size(28.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
             }
         }
     }

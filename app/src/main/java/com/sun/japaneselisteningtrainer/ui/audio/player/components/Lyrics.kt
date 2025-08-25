@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,41 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sun.japaneselisteningtrainer.R
 import kotlin.math.abs
-
-/* ---------- 1) Lyric line: theo theme, không hard-code màu ---------- */
-@Composable
-private fun LyricLine(
-    text: String,
-    isCurrent: Boolean,
-    lineProgress: Float,  // 0f..1f cho dòng hiện tại
-) {
-    val cs = MaterialTheme.colorScheme
-    val base = cs.onSurface.copy(alpha = 0.70f)     // chữ thường
-    val highlight = cs.onSurface                    // chữ đang hát
-
-    val annotated = remember(text, isCurrent, lineProgress) {
-        if (!isCurrent || text.isBlank()) {
-            buildAnnotatedString { withStyle(SpanStyle(color = base)) { append(text) } }
-        } else {
-            val p = lineProgress.coerceIn(0f, 1f)
-            val cut = (text.length * p).toInt().coerceIn(0, text.length)
-            buildAnnotatedString {
-                withStyle(SpanStyle(color = highlight, fontWeight = FontWeight.SemiBold)) {
-                    append(text.substring(0, cut))
-                }
-                if (cut < text.length) {
-                    withStyle(SpanStyle(color = base)) { append(text.substring(cut)) }
-                }
-            }
-        }
-    }
-
-    Text(
-        text = annotated,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
-    )
-}
 
 /* ---------- 2) LyricsBox: container dùng surfaceVariant theo theme ---------- */
 @Composable
@@ -87,11 +53,13 @@ fun LyricsBox(
             if (lines.isBlank()) Text(
                 text = stringResource(R.string.please_add_transcript),
                 style = MaterialTheme.typography.displayMedium
-            ) else Text(
-                text = lines,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.displaySmall
-            )
+            ) else SelectionContainer {
+                Text(
+                    text = lines,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.displaySmall
+                )
+            }
         }
     }
 }
@@ -110,7 +78,6 @@ fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = composed {
 @Composable
 fun TranscriptContainer(
     visible: Boolean,
-    SWIPE_THRESHOLD_PX: Float = 100f,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit

@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class LocalFolderRepository(dbHelper: JLTDbHelper, private val notifier: DbChangeNotifier) : FolderRepository {
+class LocalFolderRepository(dbHelper: JLTDbHelper, private val notifier: DbChangeNotifier) :
+    FolderRepository {
     private val db = dbHelper.writableDatabase
 
     override suspend fun add(folder: Folder) = withContext(Dispatchers.IO) {
@@ -46,15 +47,29 @@ class LocalFolderRepository(dbHelper: JLTDbHelper, private val notifier: DbChang
     override fun getAllFolderStream(): Flow<List<Folder>> = callbackFlow {
         suspend fun query(): List<Folder> = withContext(Dispatchers.IO) {
             val folderList = mutableListOf<Folder>()
-            val query = "SELECT * FROM ${JLTContract.Folder.TABLE_NAME}"
+            val query =
+                "SELECT f.*, COUNT(a.${BaseColumns._ID}) AS audioCount FROM ${JLTContract.Folder.TABLE_NAME} f " +
+                        "LEFT JOIN ${JLTContract.Audio.TABLE_NAME} a " +
+                        "ON f.${BaseColumns._ID} = a.${JLTContract.Audio.COLUMN_FOLDER_ID} " +
+                        "GROUP BY f.${BaseColumns._ID}"
             val cursor = db.rawQuery(query, null)
             if (cursor.moveToFirst()) {
                 do {
                     val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
-                    val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
-                    val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                    val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
-                    val folder = Folder(id, name, description, createdAt)
+                    val name =
+                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
+                    val description =
+                        cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
+                    val audioCount = cursor.getInt(cursor.getColumnIndexOrThrow("audioCount"))
+                    val createdAt =
+                        cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                    val folder = Folder(
+                        id = id,
+                        name = name,
+                        description = description,
+                        audioCount = audioCount,
+                        createdAt = createdAt
+                    )
                     folderList.add(folder)
                 } while (cursor.moveToNext())
             }
@@ -82,13 +97,22 @@ class LocalFolderRepository(dbHelper: JLTDbHelper, private val notifier: DbChang
 
     override fun getFolderStream(id: Int): Flow<Folder?> = callbackFlow {
         suspend fun query(): Folder? = withContext(Dispatchers.IO) {
-            val query = "SELECT * FROM ${JLTContract.Folder.TABLE_NAME} WHERE ${BaseColumns._ID} = ?"
+            val query =
+                "SELECT f.*, COUNT(a.${BaseColumns._ID}) audioCount FROM ${JLTContract.Folder.TABLE_NAME} f " +
+                        "LEFT JOIN ${JLTContract.Audio.TABLE_NAME} a ON f.${BaseColumns._ID} = a.${JLTContract.Audio.COLUMN_FOLDER_ID} " +
+                        "WHERE f.${BaseColumns._ID} = ? " +
+                        "GROUP BY f.${BaseColumns._ID}"
+
             val cursor = db.rawQuery(query, arrayOf(id.toString()))
             if (cursor.moveToFirst()) {
-                val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
-                val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
-                return@withContext Folder(id, name, description, createdAt)
+                val name =
+                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
+                val description =
+                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
+                val audioCount = cursor.getInt(cursor.getColumnIndexOrThrow("audioCount"))
+                val createdAt =
+                    cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                return@withContext Folder(id, name, description, audioCount, createdAt)
             }
             cursor.close()
             return@withContext null
@@ -114,14 +138,22 @@ class LocalFolderRepository(dbHelper: JLTDbHelper, private val notifier: DbChang
 
     override fun getFolderStream(title: String): Flow<Folder?> = callbackFlow {
         suspend fun query(): Folder? = withContext(Dispatchers.IO) {
-            val query = "SELECT * FROM ${JLTContract.Folder.TABLE_NAME} WHERE ${JLTContract.Folder.COLUMN_NAME} = ?"
+            val query = "SELECT f.*, COUNT(a.${BaseColumns._ID}) audioCount FROM ${JLTContract.Folder.TABLE_NAME} f " +
+                        "LEFT JOIN ${JLTContract.Audio.TABLE_NAME} a ON f.${BaseColumns._ID} = a.${JLTContract.Audio.COLUMN_FOLDER_ID} " +
+                        "WHERE ${JLTContract.Folder.COLUMN_NAME} = ? " +
+                        "GROUP BY f.${BaseColumns._ID}"
+
             val cursor = db.rawQuery(query, arrayOf(title))
             if (cursor.moveToFirst()) {
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
-                val name = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
-                val description = cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
-                val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
-                return@withContext Folder(id, name, description, createdAt)
+                val name =
+                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_NAME))
+                val description =
+                    cursor.getString(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_DESCRIPTION))
+                val audioCount = cursor.getInt(cursor.getColumnIndexOrThrow("audioCount"))
+                val createdAt =
+                    cursor.getLong(cursor.getColumnIndexOrThrow(JLTContract.Folder.COLUMN_CREATED_AT))
+                return@withContext Folder(id, name, description, audioCount, createdAt)
             }
             cursor.close()
             return@withContext null
