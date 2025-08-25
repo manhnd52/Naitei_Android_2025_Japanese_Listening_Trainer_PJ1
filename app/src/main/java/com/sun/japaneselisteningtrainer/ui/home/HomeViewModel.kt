@@ -2,6 +2,7 @@ package com.sun.japaneselisteningtrainer.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sun.japaneselisteningtrainer.data.model.Audio
 import com.sun.japaneselisteningtrainer.data.repository.AudioRepository
 import com.sun.japaneselisteningtrainer.service.AudioServiceManager
@@ -56,6 +57,13 @@ class HomeViewModel(
         viewModelScope.launch {
             audioServiceManager.toggleFavoriteStatus(audioId)
         }
+    }
+
+    /**
+     * Return: Start audio id
+     */
+    suspend fun relax() : Int {
+        return audioServiceManager.relax()
     }
 
     companion object {

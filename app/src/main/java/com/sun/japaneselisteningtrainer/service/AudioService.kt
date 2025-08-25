@@ -82,20 +82,20 @@ class AudioService : Service(), AudioPlayer.AudioPlayerCallback {
     private val lastedAudioIdStack = ArrayDeque<Int>()
 
     // Playlist management
-    private var _playlistId = MutableStateFlow<Int?>(null)
+    private val _playlistId = MutableStateFlow<Int?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private var playlist: StateFlow<List<Audio>> = _playlistId.flatMapLatest { id ->
-        if (id == null) {
-            audioRepository.getAllAudioStream()
-        } else {
-            audioRepository.getFolderAudiosStream(id)
-        }
-    }.stateIn(
-        scope = serviceScope,
-        started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
-        initialValue = emptyList()
-    )
+            if (id != null) {
+                audioRepository.getFolderAudiosStream(id)
+            } else {
+                audioRepository.getAllAudioStream()
+            }
+        }.stateIn(
+            scope = serviceScope,
+            started = kotlinx.coroutines.flow.SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
 
     private var isShuffleEnabled = false
 
@@ -207,7 +207,14 @@ class AudioService : Service(), AudioPlayer.AudioPlayerCallback {
     fun playAudio(audioId: Int, withFolder: Boolean = false) {
         _currentAudioId.value = audioId
         if (withFolder) {
-            _playlistId.value = audioId
+            serviceScope.launch {
+                val playlistId = audioRepository.getAudioStream(audioId).first()?.folderId
+                if (playlistId != null) {
+                    _playlistId.value = playlistId
+                }
+            }
+        } else {
+            _playlistId.update { null }
         }
     }
 

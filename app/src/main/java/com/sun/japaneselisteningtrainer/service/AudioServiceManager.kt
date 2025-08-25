@@ -205,4 +205,11 @@ class AudioServiceManager(
             }
         }
     }
+
+    suspend fun relax() : Int {
+        val audioIdList = audioRepository.getAllAudioStream().first().map { it.id }
+        val randomAudioId = audioIdList.random()
+        loadAndPlayAudio(randomAudioId)
+        return randomAudioId
+    }
 }
