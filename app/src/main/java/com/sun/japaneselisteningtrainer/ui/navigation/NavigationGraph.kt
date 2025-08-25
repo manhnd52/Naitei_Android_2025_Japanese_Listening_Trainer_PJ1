@@ -71,6 +71,8 @@ import com.sun.japaneselisteningtrainer.ui.home.HomeDestination
 import com.sun.japaneselisteningtrainer.ui.home.HomeScreen
 import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayer
 import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayerViewModel
+import com.sun.japaneselisteningtrainer.ui.search.SearchDestination
+import com.sun.japaneselisteningtrainer.ui.search.SearchScreen
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Add
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.destinationRoutes
 import com.sun.japaneselisteningtrainer.ui.navigation.NavItem.Companion.items
@@ -82,7 +84,7 @@ sealed class NavItem(
     object Home : NavItem(Icons.Default.Home, HomeDestination)
     object Folder : NavItem(Icons.Default.Menu, FolderListDestination)
     object Add : NavItem(Icons.Default.Add, AudioEntryDestination)
-    object Search : NavItem(Icons.Default.Search, null)
+    object Search : NavItem(Icons.Default.Search, SearchDestination)
     object Profile : NavItem(Icons.Default.Person, null)
 
     companion object {
@@ -146,6 +148,25 @@ fun TrainerNavHost(
                 },
                 navigateToFolderAudioList = { folderId ->
                     navController.navigate("${FolderAudioListDestination.route}/$folderId")
+                }
+            )
+        }
+        composable(route = SearchDestination.route) {
+            SearchScreen(
+                navigationBar = {
+                    TrainerNavigationBar(
+                        navController = navController,
+                        miniAudioPlayerViewModel = miniAudioPlayerViewModel,
+                        navigateToMusicPlayer = { audioId ->
+                            navController.navigate(MusicPlayerDestination.createRoute(audioId))
+                        }
+                    )
+                },
+                navigateToMusicPlayer = { audioId ->
+                    navController.navigate(MusicPlayerDestination.createRoute(audioId))
+                },
+                onAudioLongClick = { audioId ->
+                    navController.navigate(AudioMenuDestination.createRoute(audioId))
                 }
             )
         }
