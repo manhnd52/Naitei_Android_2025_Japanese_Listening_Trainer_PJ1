@@ -50,4 +50,9 @@
     <string name="update_audio">Update Audio</string>
     <string name="move_to">Move To</string>
     <string name="audio_menu_title">Audio Menu</string>
+    <string name="search_audio">Search Audio</string>
+    <string name="search_not_found">Search not found</string>
+    <string name="audio_not_found">Oops! Can’t find the audio...</string>
+    <string name="begin_search_notice">Type something to start your search</string>
+    <string name="audio_search_input">Input audio\'s tittle here...</string>
 </resources>

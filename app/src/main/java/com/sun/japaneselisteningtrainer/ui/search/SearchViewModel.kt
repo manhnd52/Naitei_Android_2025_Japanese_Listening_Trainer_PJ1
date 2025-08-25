@@ -12,15 +12,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
+import com.sun.japaneselisteningtrainer.data.folder.FolderRepository
+import kotlinx.coroutines.flow.first
 
 
 data class SearchUiState(
     val query: String = "",
-    val audioList: List<Audio> = emptyList()
-)
+    val audioList: List<Audio> = emptyList(),
+) {
+    val notFound: Boolean
+        get() = audioList.isEmpty() && query.isNotBlank()
+    val begin: Boolean
+        get() = query.isBlank()
+}
 
 class SearchViewModel(
     private val audioRepository: AudioRepository,
+    private val folderRepository: FolderRepository,
     private val audioServiceManager: AudioServiceManager
 ) : ViewModel() {
 
@@ -31,9 +40,7 @@ class SearchViewModel(
         _query
     ) { audioList, query ->
         val filtered = if (query.isBlank()) emptyList() else audioList.filter {
-            val fileName = Uri.parse(it.filePath).lastPathSegment ?: ""
-            it.title.contains(query, ignoreCase = true) ||
-                    fileName.contains(query, ignoreCase = true)
+            it.title.contains(query, ignoreCase = true)
         }
         SearchUiState(query = query, audioList = filtered)
     }.stateIn(

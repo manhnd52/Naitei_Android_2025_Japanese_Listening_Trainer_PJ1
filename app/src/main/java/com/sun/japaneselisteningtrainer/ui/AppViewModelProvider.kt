@@ -32,7 +32,7 @@ import com.sun.japaneselisteningtrainer.ui.folder.components.FolderPickerViewMod
 import com.sun.japaneselisteningtrainer.ui.folder.create.CreateFolderViewModel
 import com.sun.japaneselisteningtrainer.ui.folder.edit.EditFolderViewModel
 import com.sun.japaneselisteningtrainer.ui.home.HomeViewModel
-import com.sun.japaneselisteningtrainer.ui.miniaudio.MiniAudioPlayerViewModel
+import com.sun.japaneselisteningtrainer.ui.components.MiniAudioPlayerViewModel
 import com.sun.japaneselisteningtrainer.ui.search.SearchViewModel
 
 /**
